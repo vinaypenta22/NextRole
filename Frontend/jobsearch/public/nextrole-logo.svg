@@ -1,0 +1,14 @@
+<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="nextroleGradient" x1="30" y1="30" x2="190" y2="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F56E8"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <rect x="14" y="14" width="192" height="192" rx="42" fill="url(#nextroleGradient)"/>
+  <path d="M62 64H118C134.569 64 148 77.4315 148 94V94C148 110.569 134.569 124 118 124H92V154H62V64Z" fill="white" fill-opacity="0.96"/>
+  <path d="M92 94H112C117.523 94 122 89.5238 122 84V84C122 78.476 117.523 74 112 74H92V94Z" fill="#F59E0B"/>
+  <path d="M146 66H158C171.255 66 182 76.7447 182 90V90C182 103.255 171.255 114 158 114H146V66Z" fill="white" fill-opacity="0.9"/>
+  <path d="M146 124H156C169.255 124 180 134.745 180 148V148C180 161.255 169.255 172 156 172H146V124Z" fill="#C7D2FE"/>
+  <circle cx="74" cy="62" r="9" fill="#F59E0B" fill-opacity="0.95"/>
+</svg>
