@@ -304,7 +304,7 @@ function JobCard({
             </span>
           ) : (
             <button type="button" onClick={() => onApply?.(job)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0052cc] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003fa3]">
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[#0052cc] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003fa3]">
               Apply Now
             </button>
           )}
@@ -382,21 +382,7 @@ function DashboardPageContent() {
   }
 
   const HELP_QA: { patterns: string[]; answer: string; tab?: ActiveTab }[] = [
-     {patterns: ["hi",
-      "hello",
-      "hey",
-      "hii",
-      "hai",
-      "hiii",
-      "good morning",
-      "good afternoon",
-      "good evening",
-      "greetings",
-      "yo",
-      "hola",
-      "how are you",
-      "what's up",
-      "sup"],answer:"Hello! 👋 Welcome to NextRole. I'm your AI career assistant. I can help you upload your resume, find matching jobs, improve your ATS score, prepare for interviews, manage saved and applied jobs, and answer any questions about the platform. How can I help you today?"},
+    {patterns: ["hi","hello","hey","hii","hai","hiii","good morning","good afternoon","good evening", "greetings","yo","hola","how are you","what's up","sup"],answer:"Hello! 👋 Welcome to NextRole. I'm your AI career assistant. I can help you upload your resume, find matching jobs, improve your ATS score, prepare for interviews, manage saved and applied jobs, and answer any questions about the platform. How can I help you today?"},
     { patterns: ["upload", "resume", "cv", "pdf", "docx"], answer: "To upload your resume, go to the Applications tab. You'll find a file picker at the top — choose a PDF or DOCX file and click Upload Resume. The system will parse your skills and find matching jobs automatically.", tab: "applications" },
     { patterns: ["job", "find job", "search job", "match", "recommend"], answer: "Matched jobs are shown in the Applications tab after you upload your resume. You can filter by location, employment type, experience, and date posted.", tab: "applications" },
     { patterns: ["apply", "applied", "application"], answer: "Click Apply Now on any job card in the Applications tab. The job will be saved to your Applied tab and the company's application page will open in a new tab.", tab: "applied" },

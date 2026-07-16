@@ -18,7 +18,7 @@ export default function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={isLoading}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0052cc] to-[#1e5fff] px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/15 transition duration-150 hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
+      className={`cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0052cc] to-[#1e5fff] px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/15 transition duration-150 hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
     >
       {isLoading ? (
         <>

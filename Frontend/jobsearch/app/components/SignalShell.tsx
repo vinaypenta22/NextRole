@@ -44,7 +44,7 @@ export default function SignalShell({
                     key={tab.key}
                     type="button"
                     onClick={() => onTabChange(tab.key)}
-                    className={`relative inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13.5px] font-bold transition duration-150 ${
+                    className={`cursor-pointer relative inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13.5px] font-bold transition duration-150 ${
                       isActive
                         ? "bg-[#e8f0ff] text-[#0052cc]"
                         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -69,7 +69,7 @@ export default function SignalShell({
             <button
               type="button"
               onClick={onLogout}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
               aria-label="Logout"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
