@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, Phone, MapPin, Clock, Edit, Upload, CheckCircle2, Briefcase, Globe, Zap, Lightbulb , FlaskConical , Brain } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Edit, Upload, CheckCircle2, Briefcase, Globe, Zap, Lightbulb, FlaskConical, Brain, TrendingUp } from "lucide-react";
 import SignalShell from "../components/SignalShell";
 import SectionCard from "../components/SectionCard";
 import StatCard from "../components/StatCard";
@@ -81,6 +81,7 @@ type InterviewPrepItem = {
   level?: string;
   question?: string;
   tip?: string;
+  answer?: string;
 };
 
 function pickString(source: Record<string, unknown> | undefined, keys: string[], fallback = "") {
@@ -174,7 +175,8 @@ function normalizeInterviewPrepLevel(level: string) {
   if (normalized.includes("basic") || normalized.includes("beginner")) return 0;
   if (normalized.includes("intermediate") || normalized.includes("mid")) return 1;
   if (normalized.includes("advanced") || normalized.includes("senior") || normalized.includes("expert")) return 2;
-  return 3;
+  if (normalized.includes("coding") || normalized.includes("code") || normalized.includes("challenge")) return 3;
+  return 4;
 }
 
 function formatInterviewPrepLevel(level: string) {
@@ -185,7 +187,7 @@ function formatInterviewPrepLevel(level: string) {
 function formatQuestionText(value: string) {
   const cleaned = value.trim();
   if (!cleaned) return "No question provided.";
-  return cleaned.endsWith("?") ? cleaned : `${cleaned}?`;
+  return cleaned;
 }
 
 function normalizeJob(job: Record<string, unknown>) {
@@ -219,7 +221,7 @@ function normalizeJob(job: Record<string, unknown>) {
   };
 }
 
-// Reusable Job Card Component matching applications.png
+// Reusable Job Card Component
 function JobCard({
   job,
   isApplied = false,
@@ -231,83 +233,72 @@ function JobCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const normalized = useMemo(() => normalizeJob(job), [job]);
-  const summary = shortSummary(normalized.description || "No summary available.", 180);
+  const summary = shortSummary(normalized.description || "No summary available.", 200);
   const matchScore = Math.max(0, Math.min(100, normalized.match_score));
+  const scoreColor = matchScore >= 75 ? "text-emerald-600 bg-emerald-50" : matchScore >= 50 ? "text-amber-600 bg-amber-50" : "text-rose-600 bg-rose-50";
 
   return (
-    <article className="rounded-[18px] border border-[#e6ebf5] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition hover:shadow-[0_12px_30px_rgba(79,86,232,0.07)]">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h4 className="text-[16px] font-semibold tracking-[-0.02em] text-[#1f2430]">
-              {normalized.title}
-            </h4>
-            <p className="mt-1 text-[13px] text-[#596377]">{normalized.company}</p>
+    <article className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-[#0052cc]/20">
+      <div className="flex flex-col gap-3">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f0ff] text-[#0052cc] font-bold text-sm">
+              {String(normalized.company || "C").charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h4 className="text-[15px] font-semibold text-slate-800 leading-snug">{normalized.title}</h4>
+              <p className="mt-0.5 text-[13px] text-slate-500">{normalized.company}</p>
+            </div>
           </div>
-
-          <span className="shrink-0 rounded-full bg-[#fff0d9] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d97706]">
-            {matchScore.toFixed(2)}% match
+          <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold ${scoreColor}`}>
+            {matchScore.toFixed(0)}% match
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] text-[#5b657d]">
-          <div className="flex items-center gap-1.5">
-            <Briefcase size={16} className="text-[#7b8498]" />
-            <span>{normalized.employment_type}</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Globe size={16} className="text-[#7b8498]" />
-            <span>{normalized.location}</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Zap size={16} className="text-[#7b8498]" />
-            <span>{normalized.salary || "Market rate"}</span>
-          </div>
+        {/* Meta chips */}
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12px] text-slate-600">
+            <Briefcase size={13} className="text-slate-400" />{normalized.employment_type}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12px] text-slate-600">
+            <MapPin size={13} className="text-slate-400" />{normalized.location}
+          </span>
+          {normalized.salary ? (
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12px] text-slate-600">
+              <Zap size={13} className="text-slate-400" />{normalized.salary}
+            </span>
+          ) : null}
         </div>
 
+        {/* Description */}
         {normalized.description ? (
-          <div className="border-t border-[#edf1f7] pt-3">
-            <p className="text-[12.5px] leading-6 text-[#5b657d]">
+          <div className="border-t border-slate-100 pt-3">
+            <p className="text-[12.5px] leading-relaxed text-slate-500">
               {expanded ? normalized.description : summary.text}
             </p>
             {summary.truncated ? (
-              <button
-                type="button"
-                onClick={() => setExpanded((prev) => !prev)}
-                className="mt-2 text-[12px] font-semibold text-[#4f56e8]"
-              >
+              <button type="button" onClick={() => setExpanded((p) => !p)} className="mt-1.5 text-[12px] font-semibold text-[#0052cc] hover:underline">
                 {expanded ? "Show less" : "Read more"}
               </button>
             ) : null}
           </div>
         ) : null}
 
-        <div className="flex items-center gap-2 pt-2 border-t border-[#edf1f7]">
+        {/* Actions */}
+        <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
           {isApplied ? (
-            <button
-              type="button"
-              disabled
-              className="inline-flex items-center rounded-xl bg-[#e8f0ff] px-5 py-2 text-sm font-semibold text-[#0052cc]"
-            >
-              Applied
-            </button>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-600">
+              <CheckCircle2 size={14} /> Applied
+            </span>
           ) : (
-            <button
-              type="button"
-              onClick={() => onApply?.(job)}
-              className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#0052cc] to-[#1e5fff] px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,82,204,0.18)]"
-            >
+            <button type="button" onClick={() => onApply?.(job)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0052cc] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003fa3]">
               Apply Now
             </button>
           )}
-
-          <button
-            type="button"
-            className="inline-flex items-center rounded-xl border border-[#d9deea] bg-white px-5 py-2 text-sm font-semibold text-[#5b657d]"
-          >
-            Save job
+          <button type="button" className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+            Save
           </button>
         </div>
       </div>
@@ -336,6 +327,7 @@ function DashboardPageContent() {
   const [jobs, setJobs] = useState<Array<Record<string, unknown>>>([]);
   const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>([]);
   const [profileExists, setProfileExists] = useState(false);
+  const [uploadStep, setUploadStep] = useState(0);
   
   const [filters, setFilters] = useState<JobSearchFilters>({
     location: "all",
@@ -431,27 +423,17 @@ function DashboardPageContent() {
   }, [resumeData, user?.id]);
 
   useEffect(() => {
-    if (activeTab !== "applied" || !user?.id) return;
-
+    if (!user?.id) return;
     const currentUserId = user.id;
-
     async function loadAppliedJobs() {
       try {
         const response = await fetch(`${API_BASE}/applied/?user_id=${currentUserId}`, {
-          headers: {
-            Authorization: `${getAccessToken()}`,
-          },
+          headers: { Authorization: `${getAccessToken()}` },
         });
         const payload = await response.json();
-        if (!response.ok) {
-          throw new Error(payload.message || "Unable to load applied jobs.");
-        }
-        setAppliedJobs(Array.isArray(payload.results) ? (payload.results as AppliedJob[]) : []);
-      } catch {
-        setAppliedJobs([]);
-      }
+        if (response.ok) setAppliedJobs(Array.isArray(payload.results) ? (payload.results as AppliedJob[]) : []);
+      } catch { /* keep existing */ }
     }
-
     void loadAppliedJobs();
   }, [activeTab, user?.id]);
 
@@ -542,6 +524,12 @@ function DashboardPageContent() {
   }, [resumeData]);
 
   const atsScore = Number(resumeInsights.ats_resume_score ?? 0);
+
+  const resumeImprovementSuggestions = useMemo(() => {
+    const raw = resumeInsights.resume_improvement_suggestions;
+    if (!Array.isArray(raw)) return [];
+    return raw.map((s) => String(s)).filter(Boolean);
+  }, [resumeInsights]);
   
   const interviewPrep = useMemo(
     () =>
@@ -579,90 +567,82 @@ function DashboardPageContent() {
   }
 
   const interviewPrepView = (
-    <SectionCard title="Interview Preparation" description="Questions, answers, and tips grouped by skill and level.">
-      <div className="mt-4 max-h-[720px] space-y-4 overflow-auto pr-1">
-        
-
-        {groupedInterviewPrep.length ? (
-          groupedInterviewPrep.map((group) => (
-            <section key={group.skill} className="rounded-[18px] border border-[#edf1f7] bg-[#fafbfe] p-4">
-              <button
-                type="button"
-                onClick={() => toggleSkillCollapse(group.skill)}
-                className="flex w-full items-center justify-between gap-3 text-left"
-              >
+    <div className="space-y-4">
+      {groupedInterviewPrep.length ? (
+        groupedInterviewPrep.map((group) => (
+          <div key={group.skill} className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleSkillCollapse(group.skill)}
+              className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-slate-50 transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#e8f0ff] text-[#0052cc]">
+                  <Brain size={16} />
+                </div>
                 <div>
-                  <h4 className="text-[15px] font-semibold tracking-[-0.01em] text-[#1f2430]">{group.skill}</h4>
-                  <p className="mt-1 text-[12px] text-[#7b8498]">{group.items.length} question{group.items.length === 1 ? "" : "s"}</p>
+                  <h4 className="text-[14px] font-semibold text-slate-800">{group.skill}</h4>
+                  <p className="text-[12px] text-slate-400">{group.items.length} question{group.items.length === 1 ? "" : "s"}</p>
                 </div>
-                <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0052cc]">
-                  {collapsedSkills[group.skill] ? "Show" : "Hide"}
-                </span>
-              </button>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                collapsedSkills[group.skill] ? "bg-slate-100 text-slate-500" : "bg-[#e8f0ff] text-[#0052cc]"
+              }`}>
+                {collapsedSkills[group.skill] ? "Show" : "Hide"}
+              </span>
+            </button>
 
-              {!collapsedSkills[group.skill] ? (
-                <div className="mt-4 space-y-3">
-                  {group.items.map((item, idx) => {
-                    const level = formatInterviewPrepLevel(String(item.level || "Practice"));
-                    const levelRank = normalizeInterviewPrepLevel(level);
-                    const questionText = formatQuestionText(String(item.question || ""));
-                    const tipText = String(item.tip || "").trim();
+            {!collapsedSkills[group.skill] ? (
+              <div className="border-t border-slate-100 px-5 py-4 space-y-3">
+                {group.items.map((item, idx) => {
+                  const level = formatInterviewPrepLevel(String(item.level || "Practice"));
+                  const levelRank = normalizeInterviewPrepLevel(level);
+                  const questionText = formatQuestionText(String(item.question || ""));
+                  const answerText = String(item.answer || item.tip || "").trim();
 
-                    let badgeColor = "bg-blue-50 text-blue-600";
-                    let barColor = "bg-[#3b82f6]";
-                    let progressPercent = 33;
+                  const isCoding = levelRank === 3;
 
-                    if (levelRank === 2) {
-                      badgeColor = "bg-emerald-50 text-emerald-600";
-                      barColor = "bg-emerald-500";
-                      progressPercent = 100;
-                    } else if (levelRank === 1) {
-                      badgeColor = "bg-amber-50 text-amber-600";
-                      barColor = "bg-amber-500";
-                      progressPercent = 66;
-                    }
+                  let badgeClass = "bg-blue-50 text-blue-600";
+                  let barClass = "bg-[#0052cc]";
+                  let progressPct = 25;
+                  if (levelRank === 3) { badgeClass = "bg-purple-50 text-purple-600"; barClass = "bg-purple-500"; progressPct = 100; }
+                  else if (levelRank === 2) { badgeClass = "bg-emerald-50 text-emerald-600"; barClass = "bg-emerald-500"; progressPct = 75; }
+                  else if (levelRank === 1) { badgeClass = "bg-amber-50 text-amber-600"; barClass = "bg-amber-400"; progressPct = 50; }
 
-                    return (
-                      <div key={`${group.skill}-${level}-${idx}`} className="rounded-[14px] border border-white bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[13.5px] font-semibold tracking-[-0.01em] text-[#1f2430]">
-                              {group.skill}
-                            </span>
-                            <span className={`rounded px-2.5 py-1 text-[9.5px] font-semibold uppercase tracking-[0.18em] ${badgeColor}`}>
-                              {level}
-                            </span>
-                          </div>
-                          <span className="text-amber-500" title="Interview question">
-                            <Lightbulb size={16} />
-                          </span>
-                        </div>
-
-                        <p className="mt-3 text-[12.5px] leading-6 text-[#1f2430]">
-                          <span className="font-semibold text-[#596377]">Q.</span> {questionText}
-                        </p>
-
-                        <p className="mt-2 text-[12.5px] leading-6 text-[#5b657d]">
-                          <span className="font-semibold text-[#596377]">Tip.</span> {tipText || "No tip available."}
-                        </p>
-
-                        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#edf1f7]">
-                          <div className={`h-full rounded-full ${barColor}`} style={{ width: `${progressPercent}%` }} />
-                        </div>
+                  return (
+                    <div key={`${group.skill}-${idx}`} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className={`rounded-md px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${badgeClass}`}>{level}</span>
+                        {isCoding ? <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Code Challenge</span> : <Lightbulb size={14} className="text-amber-400 shrink-0" />}
                       </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </section>
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm font-medium text-slate-400 h-full">
-            Interview practice and skill recommendations will load here after your resume is analyzed.
+                      <p className="text-[13px] font-semibold text-slate-700 leading-relaxed mb-2">{questionText}</p>
+                      {isCoding ? (
+                        <pre className="mt-2 overflow-x-auto rounded-lg bg-slate-900 px-4 py-3 text-[12px] leading-relaxed text-emerald-300 font-mono whitespace-pre-wrap">{answerText || "No solution available."}</pre>
+                      ) : (
+                        <div className="text-[12.5px] text-slate-600 leading-relaxed whitespace-pre-wrap font-mono bg-slate-100 rounded-lg px-3 py-2.5 mt-1">
+                          <span className="font-semibold not-italic font-sans text-slate-700 block mb-1">Answer:</span>{answerText || "No answer available."}
+                        </div>
+                      )}
+                      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div className={`h-full rounded-full transition-all duration-500 ${barClass}`} style={{ width: `${progressPct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
-        )}
-      </div>
-    </SectionCard>
+        ))
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f0ff] text-[#0052cc] mb-4">
+            <Brain size={24} />
+          </div>
+          <p className="text-[14px] font-semibold text-slate-600">No interview prep yet</p>
+          <p className="mt-1 text-[13px] text-slate-400">Upload your resume to generate skill-based questions.</p>
+        </div>
+      )}
+    </div>
   );
 
   const displayName = profile.name || String(resumeData?.resume_details?.name || user?.name || "");
@@ -754,8 +734,17 @@ function DashboardPageContent() {
     formData.append("resume", selectedFile);
     formData.append("user_id", String(user.id));
 
+    let t2: ReturnType<typeof setTimeout> | undefined;
+    let t3: ReturnType<typeof setTimeout> | undefined;
+    let t4: ReturnType<typeof setTimeout> | undefined;
+    let t5: ReturnType<typeof setTimeout> | undefined;
     try {
       setUploading(true);
+      setUploadStep(1);
+      t2 = setTimeout(() => setUploadStep(2), 4000);
+      t3 = setTimeout(() => setUploadStep(3), 9000);
+      t4 = setTimeout(() => setUploadStep(4), 15000);
+      t5 = setTimeout(() => setUploadStep(5), 22000);
       const response = await fetch(`${API_BASE}/upload/`, {
         method: "POST",
         headers: {
@@ -785,13 +774,14 @@ function DashboardPageContent() {
       } else {
         setJobs([]);
       }
-      setSuccess("Application saved and the external parsing has been opened.");
       setSelectedFile(null);
       setActiveTab("applications");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
+      clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); clearTimeout(t5);
       setUploading(false);
+      setUploadStep(0);
     }
   }
 
@@ -847,6 +837,71 @@ function DashboardPageContent() {
     return (
       <div className="flex min-h-screen items-center justify-center text-[14px] font-semibold text-slate-400">
         Loading dashboard...
+      </div>
+    );
+  }
+
+  const uploadSteps = [
+    { label: "Reading resume", icon: "📄" },
+    { label: "Extracting skills", icon: "🔍" },
+    { label: "Finding ATS score", icon: "📊" },
+    { label: "Searching jobs", icon: "💼" },
+    { label: "Preparing interview questions", icon: "🧠" },
+  ];
+
+  if (uploading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 px-6">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-10 shadow-[0_24px_60px_rgba(0,82,204,0.10)]">
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e8f0ff] text-3xl mb-4">
+              {uploadSteps[(uploadStep || 1) - 1]?.icon}
+            </div>
+            <h2 className="text-[18px] font-bold text-slate-800">Analyzing your resume</h2>
+            <p className="mt-1 text-[13px] text-slate-400">This takes about 30–60 seconds. Please wait.</p>
+          </div>
+          <div className="space-y-3">
+            {uploadSteps.map((step, idx) => {
+              const stepNum = idx + 1;
+              const isDone = uploadStep > stepNum;
+              const isActive = uploadStep === stepNum;
+              return (
+                <div key={step.label} className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-500 ${
+                  isDone ? "bg-emerald-50 border border-emerald-100" :
+                  isActive ? "bg-[#e8f0ff] border border-[#c0d4f5]" :
+                  "bg-slate-50 border border-slate-100 opacity-40"
+                }`}>
+                  <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${
+                    isDone ? "bg-emerald-500 text-white" :
+                    isActive ? "bg-[#0052cc] text-white" :
+                    "bg-slate-200 text-slate-400"
+                  }`}>
+                    {isDone ? "✓" : stepNum}
+                  </div>
+                  <span className={`text-[13.5px] font-semibold ${
+                    isDone ? "text-emerald-700" : isActive ? "text-[#0052cc]" : "text-slate-400"
+                  }`}>{step.label}</span>
+                  {isActive ? (
+                    <span className="ml-auto flex gap-1">
+                      {[0,1,2].map((i) => (
+                        <span key={i} className="h-1.5 w-1.5 rounded-full bg-[#0052cc] animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                      ))}
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#0052cc] to-[#00a8e8] transition-all duration-700 ease-out"
+              style={{ width: `${((uploadStep || 1) / uploadSteps.length) * 100}%` }}
+            />
+          </div>
+          <p className="mt-3 text-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            Step {uploadStep || 1} of {uploadSteps.length}
+          </p>
+        </div>
       </div>
     );
   }
@@ -908,8 +963,8 @@ function DashboardPageContent() {
         ) : null}
 
         {hasResume && activeTab === "profile" ? (
-          <div className="grid gap-6 xl:grid-cols-[0.96fr_1.04fr]">
-            <section className="rounded-[28px] border border-[#e6ebf5] bg-white p-6 shadow-[0_20px_45px_rgba(79,86,232,0.06)] md:p-7">
+          <div className="grid gap-6 xl:grid-cols-2">
+            <section className="rounded-[28px] border border-[#e6ebf5] bg-white p-6 shadow-[0_20px_45px_rgba(79,86,232,0.06)] md:p-7 h-fit">
               <div className="flex flex-col items-center text-center">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0052cc_0%,#00a8e8_100%)] text-[28px] font-bold text-white shadow-[0_12px_30px_rgba(0,82,204,0.25)]">
                   {initials}
@@ -961,7 +1016,7 @@ function DashboardPageContent() {
                 <div className="flex items-start gap-3">
                   <Globe className="mt-0.5 h-4 w-4 text-[#7b8498]" />
                   <div>
-                    <p className="text-[12px] text-[#7b8498]">Linkdin</p>
+                    <p className="text-[12px] text-[#7b8498]">Linkedin</p>
                     <p className="font-semibold text-[#1f2430]">{displayLinkedIn || "-"}</p>
                   </div>
                 </div>
@@ -1156,9 +1211,25 @@ function DashboardPageContent() {
                   </p>
                 </div>
 
-                {/* Right parsed insights list */}
-                <div className="space-y-4">
-                  
+                {/* Right: Resume Improvement Suggestions from API */}
+                <div className="flex flex-col gap-2.5">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Improvement Suggestions</p>
+                  {resumeImprovementSuggestions.length ? (
+                    resumeImprovementSuggestions.map((suggestion, idx) => (
+                      <div key={idx} className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50/50 px-4 py-3">
+                        <TrendingUp size={15} className="mt-0.5 shrink-0 text-amber-500" />
+                        <p className="text-[12.5px] font-medium text-amber-800 leading-relaxed">{suggestion}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-4">
+                      <CheckCircle2 size={18} className="shrink-0 text-emerald-500" />
+                      <div>
+                        <p className="text-[13px] font-bold text-emerald-700">Your resume looks great!</p>
+                        <p className="text-[11.5px] text-emerald-500 mt-0.5">No improvement suggestions from the AI. Keep it updated as you grow.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -1288,9 +1359,50 @@ function DashboardPageContent() {
             <SectionCard title="Applied jobs" description="Jobs you have already applied to are stored in the database.">
               <div className="space-y-4 mt-4">
                 {appliedJobs.length ? (
-                  appliedJobs.map((job) => (
-                    <JobCard key={job.id} job={job} isApplied={true} />
-                  ))
+                  appliedJobs.map((job) => {
+                    const jobWithScore = { ...job, match_score: job.match_score ?? 0 };
+                    return (
+                      <div key={job.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f0ff] text-[#0052cc] font-bold text-sm">
+                              {String(job.company || "C").charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <h4 className="text-[15px] font-semibold text-slate-800 leading-snug">{job.title}</h4>
+                              <p className="mt-0.5 text-[13px] text-slate-500">{job.company}</p>
+                            </div>
+                          </div>
+                          <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-600">
+                            <CheckCircle2 size={12} /> Applied
+                          </span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12px] text-slate-600">
+                            <Briefcase size={13} className="text-slate-400" />{job.employment_type || "Full-Time"}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12px] text-slate-600">
+                            <MapPin size={13} className="text-slate-400" />{job.location || "Remote"}
+                          </span>
+                          {job.match_score > 0 ? (
+                            <span className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-bold ${
+                              job.match_score >= 75 ? "text-emerald-600 bg-emerald-50" : job.match_score >= 50 ? "text-amber-600 bg-amber-50" : "text-rose-600 bg-rose-50"
+                            }`}>
+                              <Zap size={13} />{job.match_score.toFixed(0)}% match
+                            </span>
+                          ) : null}
+                          {job.applied_at ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12px] text-slate-500">
+                              <Clock size={13} className="text-slate-400" />Applied {new Date(job.applied_at).toLocaleDateString()}
+                            </span>
+                          ) : null}
+                        </div>
+                        {job.description ? (
+                          <p className="mt-3 text-[12.5px] leading-relaxed text-slate-500 border-t border-slate-100 pt-3 line-clamp-2">{job.description}</p>
+                        ) : null}
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="rounded-xl border border-slate-100 bg-slate-50/20 p-8 text-center text-sm font-semibold text-slate-400">
                     No applied jobs yet. Apply to a role from the matched jobs list to store it here.

@@ -463,191 +463,83 @@ class ResumeUploadAPIView(APIView):
         return self.normalize_resume_details({}, text)
 
     def _generate_resume_insights_with_openai(self, extracted_data, recommended_jobs=None):
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            return None
-
         recommended_jobs = recommended_jobs or []
         skills = extracted_data.get("skills") or []
         if not isinstance(skills, list):
             skills = [skills]
 
-        normalized_skills = [str(skill).strip() for skill in skills if isinstance(skill, str) and skill.strip()]
+        normalized_skills = [str(s).strip() for s in skills if isinstance(s, str) and s.strip()]
         if not normalized_skills:
-            normalized_skills = ["python", "django", "react"]
+            normalized_skills = ["Python", "Django", "React"]
 
-        job_context = []
-        for job in recommended_jobs[:5]:
-            if not isinstance(job, dict):
-                continue
-            job_context.append({
-                "title": str(job.get("title") or ""),
-                "company": str(job.get("company") or ""),
-                "description": str(job.get("description") or "")[:500],
-            })
+        designation = extracted_data.get("current_designation") or "Software Developer"
+        experience_years = extracted_data.get("experience_years", 0)
 
-        prompt = f"""
-You are a Senior Software Engineer and Technical Interview Panel with over 15 years of experience interviewing candidates at top product and service-based companies such as Google, Microsoft, Amazon, Meta, Netflix, Adobe, Atlassian, Oracle, Walmart Global Tech, TCS, Infosys, Accenture, Cognizant, and Deloitte.
+        # Pick top 4 skills most relevant to the designation (skip generic tools)
+        skip_tools = {"git", "github", "vs code", "postman", "chrome devtools", "bitbucket", "jira", "slack", "figma"}
+        core_skills = [s for s in normalized_skills if s.lower() not in skip_tools][:4]
+        if not core_skills:
+            core_skills = normalized_skills[:4]
 
-Candidate Skills:
-{json.dumps(normalized_skills)}
+        prompt = f"""You are a Senior Technical Interview Coach. Generate a complete interview preparation pack for this candidate.
 
-Candidate Experience:
-{extracted_data.get("experience", "")}
+Designation: {designation}
+Skills: {json.dumps(core_skills)}
+Experience: {experience_years} years
 
-Your task is to generate the MOST FREQUENTLY ASKED interview questions for each technical skill based on the candidate's experience level.
+For EACH skill in the list above, generate EXACTLY:
+- 3 Basic questions with full answers
+- 3 Intermediate questions with full answers
+- 3 Advanced questions with full answers
+- 3 Coding questions with complete working code solutions
 
-Return ONLY valid JSON.
+Total = 12 items per skill.
 
-Schema:
+For Coding level: the question must be a real coding problem (e.g. implement a function, fix a bug, write a component). The answer must contain the COMPLETE working code solution with explanation.
 
+For Basic/Intermediate/Advanced: the answer must be a thorough, interview-ready explanation — not a hint. Write as if explaining to an interviewer at Google/Amazon.
+
+Return ONLY this JSON (no markdown, no explanation outside JSON):
 {{
-  "ats_resume_score": 0,
-
+  "ats_resume_score": 82,
   "resume_improvement_suggestions": [
-    ""
+    "Add measurable impact metrics to each work experience bullet point.",
+    "Include a concise professional summary tailored to {designation} roles.",
+    "List certifications with issuing body and year obtained.",
+    "Quantify project outcomes (e.g. reduced load time by 40%).",
+    "Add relevant keywords from job descriptions to pass ATS filters."
   ],
-
-  "interview_preparation": [
-    {{
-      "skill": "",
-
-      "basic": [
-        {{
-          "question": "",
-          "answer": ""
-        }}
-      ],
-
-      "intermediate": [
-        {{
-          "question": "",
-          "answer": ""
-        }}
-      ],
-
-      "advanced": [
-        {{
-          "question": "",
-          "answer": ""
-        }}
-      ],
-
-      "coding": [
-        {{
-          "title": "",
-          "difficulty": "",
-          "problem_statement": "",
-          "approach": "",
-          "time_complexity": "",
-          "space_complexity": "",
-          "solution": ""
-        }}
-      ]
-    }}
+  "ai_interview_preparation": [
+    {{"skill": "React.js", "level": "Basic", "question": "What is the virtual DOM in React and how does it work?", "answer": "The virtual DOM is a lightweight in-memory representation of the real DOM. When state changes, React creates a new virtual DOM tree, diffs it against the previous one (reconciliation), and only updates the changed nodes in the real DOM. This avoids expensive full-page re-renders. Example: when you call setState, React re-renders the component in the virtual DOM first, computes the minimal set of changes, then applies only those to the browser DOM."}},
+    {{"skill": "React.js", "level": "Coding", "question": "Write a custom React hook useDebounce(value, delay) that delays updating the returned value until the user stops typing.", "answer": "import {{ useState, useEffect }} from 'react';\n\nfunction useDebounce(value, delay) {{\n  const [debouncedValue, setDebouncedValue] = useState(value);\n\n  useEffect(() => {{\n    const timer = setTimeout(() => {{\n      setDebouncedValue(value);\n    }}, delay);\n\n    return () => clearTimeout(timer); // cleanup on value change\n  }}, [value, delay]);\n\n  return debouncedValue;\n}}\n\n// Usage:\n// const debouncedSearch = useDebounce(searchTerm, 500);"}}
   ]
 }}
 
-Rules:
-
-1. Generate interview questions ONLY for important technical skills.
-2. Ignore generic tools and utilities such as:
-   - VS Code
-   - GitHub
-   - Git
-   - Postman
-   - Chrome DevTools
-   - Bitbucket
-
-3. Focus on technologies such as:
-   - React.js
-   - JavaScript
-   - TypeScript
-   - Next.js
-   - HTML
-   - CSS
-   - Bootstrap
-   - Material UI
-   - Redux
-   - React Hooks
-   - Python
-   - Django
-   - Django REST Framework
-   - SQL
-   - REST APIs
-   - Authentication
-   - Performance Optimization
-
-4. For EACH skill generate:
-   • 10 Basic Interview Questions
-   • 10 Intermediate Interview Questions
-   • 10 Advanced Interview Questions
-   • 10 Coding Interview Questions
-
-5. Every question must be unique.
-
-6. Questions should be the MOST FREQUENTLY ASKED in real interviews.
-
-7. Include interview questions from:
-   - Product-based companies
-   - Service-based companies
-   - Startup interviews
-
-8. Every question must have a detailed answer suitable for interview preparation.
-
-9. Coding questions must include:
-   - Problem Statement
-   - Approach
-   - Time Complexity
-   - Space Complexity
-   - Complete Python Solution
-   - Difficulty (Easy/Medium/Hard)
-
-10. Order questions from easiest to hardest.
-
-11. Tailor the difficulty according to the candidate's experience.
-
-12. Return ONLY valid JSON.
-
-13. Do NOT return markdown.
-
-14. Do NOT return explanations outside the JSON.
-
-15. Ensure the JSON is valid and can be parsed directly using json.loads().
-"""
+Now generate the full response for ALL skills: {json.dumps(core_skills)}. Every skill must have exactly 3 Basic + 3 Intermediate + 3 Advanced + 3 Coding items."""
 
         try:
-            response = requests.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": "gpt-4o-mini",
-                    "temperature": 0,
-                    "response_format": {"type": "json_object"},
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are a precise ATS resume assessment assistant. Return only valid JSON matching the requested schema.",
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt,
-                        },
-                    ],
-                },
-                timeout=25,
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a Senior Technical Interview Coach. Return only valid JSON. No markdown fences. No text outside the JSON object.",
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
+                temperature=0.3,
+                response_format={"type": "json_object"},
+                max_tokens=8000,
             )
 
-            response.raise_for_status()
-            payload = response.json()
-            content = payload.get("choices", [{}])[0].get("message", {}).get("content")
+            content = response.choices[0].message.content.strip()
             parsed = self.safe_json_loads(content)
 
             if not isinstance(parsed, dict):
-                raise ValueError("OpenAI insight response was not a JSON object.")
+                raise ValueError("Groq insight response was not a JSON object.")
 
             ats_score = parsed.get("ats_resume_score")
             suggestions = parsed.get("resume_improvement_suggestions")
@@ -660,18 +552,34 @@ Rules:
                     ats_score = 0
 
             if not isinstance(suggestions, list) or len(suggestions) < 3:
-                raise ValueError("OpenAI suggestions payload is incomplete.")
+                raise ValueError("Groq suggestions payload is incomplete.")
 
-            if not isinstance(interview_prep, list) or len(interview_prep) < 3:
-                raise ValueError("OpenAI interview prep payload is incomplete.")
+            if not isinstance(interview_prep, list) or len(interview_prep) < 5:
+                raise ValueError("Groq interview prep payload is incomplete.")
+
+            flat_prep = []
+            for item in interview_prep:
+                if not isinstance(item, dict):
+                    continue
+                answer = str(item.get("answer") or item.get("tip") or "").strip()
+                if all(k in item for k in ("skill", "level", "question")) and answer:
+                    flat_prep.append({
+                        "skill": str(item["skill"]).strip(),
+                        "level": str(item["level"]).strip(),
+                        "question": str(item["question"]).strip(),
+                        "answer": answer,
+                    })
+
+            if len(flat_prep) < 5:
+                raise ValueError("Groq interview prep items are not in the expected flat format.")
 
             return {
                 "ats_resume_score": max(0, min(100, ats_score)),
-                "resume_improvement_suggestions": suggestions[:3],
-                "ai_interview_preparation": interview_prep[:3],
+                "resume_improvement_suggestions": suggestions[:5],
+                "ai_interview_preparation": flat_prep,
             }
         except Exception as exc:
-            print("OpenAI resume insight generation failed:", str(exc))
+            print("Groq resume insight generation failed:", str(exc))
             return None
 
     def generate_resume_insights(self, extracted_data, recommended_jobs=None):
@@ -722,27 +630,35 @@ Rules:
             ]
 
         interview_prep = []
-        for skill in normalized_skills[:5]:
-            interview_prep.extend([
-                {
-                    "skill": skill,
-                    "level": "Basic",
-                    "question": f"Explain {skill} in simple terms and describe one project where you used it.",
-                    "tip": f"Start with the problem, then explain how {skill} helped you build or improve the solution.",
-                },
-                {
-                    "skill": skill,
-                    "level": "Intermediate",
-                    "question": f"Walk me through a real scenario where you used {skill} to make an implementation decision or improve performance.",
-                    "tip": f"Focus on tradeoffs, constraints, and how your {skill} choice influenced the outcome.",
-                },
-                {
-                    "skill": skill,
-                    "level": "Advanced",
-                    "question": f"How would you design a scalable or production-ready solution using {skill} for a high-growth team?",
-                    "tip": f"Show architecture thinking, reliability, observability, testing, and impact on business goals.",
-                },
-            ])
+        for skill in normalized_skills[:4]:
+            s = skill
+            for level, question, answer in [
+                ("Basic", f"What is {s} and what problem does it solve?",
+                 f"{s} is a widely-used technology in modern software development. It solves problems like code reusability, performance, and developer productivity. For example, React solves the problem of efficiently updating the UI by using a virtual DOM. Django solves rapid backend development by providing an ORM, admin panel, and authentication out of the box."),
+                ("Basic", f"What are the core concepts you must know in {s}?",
+                 f"Core concepts in {s}: 1) Component/module structure and how they communicate, 2) State and data management, 3) Error handling patterns, 4) Configuration and setup, 5) Testing approach. Mastering these gives you a strong foundation for any interview question on {s}."),
+                ("Basic", f"How do you install and set up {s} in a new project?",
+                 f"For Python packages: pip install {s}. For JS: npm install {s}. After installing, import it at the top of your file and follow the official quickstart. Always pin the version in requirements.txt or package.json to avoid breaking changes."),
+                ("Intermediate", f"How does {s} handle performance optimization?",
+                 f"{s} provides several built-in performance tools. For React: use React.memo to prevent unnecessary re-renders, useMemo/useCallback to memoize values and functions, and lazy() with Suspense for code splitting. For Django: use select_related() and prefetch_related() to reduce database queries, and cache views with Django's cache framework."),
+                ("Intermediate", f"How do you handle errors and exceptions in {s}?",
+                 f"In Python/{s}: wrap risky operations in try/except blocks and raise specific exceptions. In JavaScript/{s}: use try/catch with async/await, and add error boundaries in React components. Always log errors with context and return user-friendly messages. Never expose stack traces to end users."),
+                ("Intermediate", f"Explain a real-world architecture pattern you used with {s}.",
+                 f"I used {s} in a layered architecture: the presentation layer handled UI/API responses, the service layer contained business logic, and the data layer managed database access. This separation made the codebase testable and maintainable. For example, in a Django REST API, views call service functions which call repository functions — no business logic in views."),
+                ("Advanced", f"How would you scale a {s} application to handle 1 million users?",
+                 f"Scaling {s} to 1M users: 1) Horizontal scaling — run multiple instances behind a load balancer, 2) Database optimization — read replicas, connection pooling, query caching, 3) CDN for static assets, 4) Async task queues (Celery/Redis) for heavy operations, 5) Rate limiting and circuit breakers to protect services. Monitor with Prometheus + Grafana."),
+                ("Advanced", f"How do you secure a {s} application against common vulnerabilities?",
+                 f"Security checklist for {s}: 1) SQL injection — use ORM/parameterized queries, never raw string interpolation, 2) XSS — sanitize and escape all user input, 3) CSRF — use CSRF tokens on state-changing requests, 4) Auth — use JWT with short expiry + refresh tokens, 5) Secrets — never hardcode API keys, use environment variables. Run OWASP ZAP scans regularly."),
+                ("Advanced", f"Describe a production incident you resolved involving {s}.",
+                 f"Situation: Our {s} service started returning 500 errors under load. Task: Identify root cause within 30 minutes. Action: Checked logs — found N+1 query problem causing DB connection pool exhaustion. Added select_related() to the queryset and deployed a hotfix. Result: Response time dropped from 8s to 200ms, zero errors for 60+ days. Lesson: always profile queries before going to production."),
+                ("Coding", f"Write a function in {s} to find the two numbers in an array that sum to a target value.",
+                 f"# Python solution using hash map — O(n) time, O(n) space\ndef two_sum(nums, target):\n    seen = {{}}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []\n\n# Example:\nprint(two_sum([2, 7, 11, 15], 9))  # Output: [0, 1]\n\n# JavaScript equivalent:\nfunction twoSum(nums, target) {{\n  const seen = {{}};\n  for (let i = 0; i < nums.length; i++) {{\n    const complement = target - nums[i];\n    if (complement in seen) return [seen[complement], i];\n    seen[nums[i]] = i;\n  }}\n  return [];\n}}"),
+                ("Coding", f"Implement a debounce function for {s} that delays execution until the user stops triggering it.",
+                 f"// JavaScript debounce — used in search inputs, resize handlers\nfunction debounce(fn, delay) {{\n  let timer;\n  return function(...args) {{\n    clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), delay);\n  }};\n}}\n\n// React hook version:\nimport {{ useState, useEffect }} from 'react';\nfunction useDebounce(value, delay) {{\n  const [debounced, setDebounced] = useState(value);\n  useEffect(() => {{\n    const t = setTimeout(() => setDebounced(value), delay);\n    return () => clearTimeout(t);\n  }}, [value, delay]);\n  return debounced;\n}}\n\n// Python equivalent using threading:\nimport threading\ndef debounce(fn, delay):\n    timer = None\n    def wrapper(*args, **kwargs):\n        nonlocal timer\n        if timer: timer.cancel()\n        timer = threading.Timer(delay, fn, args, kwargs)\n        timer.start()\n    return wrapper"),
+                ("Coding", f"Write a {s} function to flatten a deeply nested array/list into a single flat list.",
+                 f"# Python — recursive approach\ndef flatten(arr):\n    result = []\n    for item in arr:\n        if isinstance(item, list):\n            result.extend(flatten(item))\n        else:\n            result.append(item)\n    return result\n\nprint(flatten([1, [2, [3, [4]], 5]]))  # [1, 2, 3, 4, 5]\n\n# Python one-liner using itertools:\nfrom itertools import chain\ndef flatten_iter(arr):\n    return list(chain.from_iterable(x if isinstance(x, list) else [x] for x in arr))\n\n// JavaScript:\nconst flatten = (arr) => arr.reduce((acc, val) =>\n  Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []);\n\nconsole.log(flatten([1, [2, [3, [4]], 5]])); // [1, 2, 3, 4, 5]"),
+            ]:
+                interview_prep.append({"skill": s, "level": level, "question": question, "answer": answer})
 
         return {
             "ats_resume_score": ats_score,

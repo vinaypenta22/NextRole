@@ -331,10 +331,10 @@ export default function ProfilePage() {
         </SectionCard>
 
         {/* Bottom Columns: User Info, Skills, Education */}
-        <div className="grid gap-6 xl:grid-cols-[1fr_1.6fr]">
+        <div className="grid gap-6 xl:grid-cols-2">
           
           {/* Left Panel: Profile Detail Card / Form */}
-          <div className="rounded-[20px] border border-slate-100 bg-white p-6 shadow-sm shadow-purple-950/[0.015]">
+          <div className="rounded-[20px] border border-slate-100 bg-white p-6 shadow-sm shadow-purple-950/[0.015] h-fit">
             {isEditing ? (
               /* Editable profile form */
               <div className="space-y-4">
@@ -474,7 +474,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Right Panel: Technical Skills & Education */}
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             
             {/* Technical Skills Card */}
             <div className="rounded-[20px] border border-slate-100 bg-white p-5 shadow-sm shadow-purple-950/[0.015] md:p-6">
