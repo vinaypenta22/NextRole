@@ -118,15 +118,15 @@ export default function SignupPage() {
               <input
                 type="checkbox"
                 required
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0052cc] focus:ring-[#0052cc]"
               />
               <span>
                 I agree to the{" "}
-                <a href="#" className="text-[#8b5cf6] hover:text-[#7c3aed]">
+                <a href="#" className="text-[#0052cc] hover:text-[#003fa3]">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="#" className="text-[#8b5cf6] hover:text-[#7c3aed]">
+                <a href="#" className="text-[#0052cc] hover:text-[#003fa3]">
                   Privacy Policy
                 </a>
               </span>
@@ -146,7 +146,7 @@ export default function SignupPage() {
 
         <div className="text-center text-[13px] font-semibold text-slate-500">
           Already have an account?{" "}
-          <Link href="/login" className="text-[#8b5cf6] hover:text-[#7c3aed]">
+          <Link href="/login" className="text-[#0052cc] hover:text-[#003fa3]">
             Sign in
           </Link>
         </div>

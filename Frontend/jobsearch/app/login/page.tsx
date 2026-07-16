@@ -83,7 +83,7 @@ export default function LoginPage() {
             required
             togglePassword
             rightAction={
-              <a href="#" className="text-[12px] font-bold text-[#8b5cf6] hover:text-[#7c3aed]">
+              <a href="#" className="text-[12px] font-bold text-[#0052cc] hover:text-[#003fa3]">
                 Forgot?
               </a>
             }
@@ -93,7 +93,7 @@ export default function LoginPage() {
             <label className="flex items-center gap-2 cursor-pointer select-none text-[13px] font-semibold text-slate-600">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                className="h-4 w-4 rounded border-slate-300 text-[#0052cc] focus:ring-[#0052cc]"
               />
               Remember me
             </label>
@@ -112,12 +112,12 @@ export default function LoginPage() {
 
         <div className="text-center text-[13px] font-semibold text-slate-500">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-[#8b5cf6] hover:text-[#7c3aed]">
+          <Link href="/signup" className="text-[#0052cc] hover:text-[#003fa3]">
             Create one
           </Link>
         </div>
 
-        <div className="relative flex py-2 items-center">
+        {/* <div className="relative flex py-2 items-center">
           <div className="flex-grow border-t border-slate-200"></div>
           <span className="flex-shrink mx-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">or</span>
           <div className="flex-grow border-t border-slate-200"></div>
@@ -143,7 +143,7 @@ export default function LoginPage() {
             />
           </svg>
           <span>Continue with Google</span>
-        </button>
+        </button> */}
       </div>
     </AuthLayout>
   );

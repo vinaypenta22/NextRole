@@ -18,9 +18,9 @@ export default function SignalShell({
   children,
 }: SignalShellProps) {
   return (
-    <div className="min-h-screen bg-slate-50/50 text-slate-800 font-sans">
+    <div className="min-h-screen bg-[#f0f4ff] text-[#0a1428] font-sans">
       {/* Header bar */}
-      <header className="sticky top-0 z-40 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 w-full border-b border-blue-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo on the left */}
           <Logo />
@@ -33,7 +33,7 @@ export default function SignalShell({
                 onClick={() => onTabChange("profile")}
                 className={`rounded-full px-4 py-1.5 text-[13.5px] font-bold transition duration-150 ${
                   activeTab === "profile"
-                    ? "bg-[#f3e8ff] text-[#7c3aed]"
+                    ? "bg-[#e8f0ff] text-[#0052cc]"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
@@ -44,7 +44,7 @@ export default function SignalShell({
                 onClick={() => onTabChange("applications")}
                 className={`rounded-full px-4 py-1.5 text-[13.5px] font-bold transition duration-150 ${
                   activeTab === "applications"
-                    ? "bg-[#f3e8ff] text-[#7c3aed]"
+                    ? "bg-[#e8f0ff] text-[#0052cc]"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
@@ -55,7 +55,7 @@ export default function SignalShell({
                 onClick={() => onTabChange("applied")}
                 className={`rounded-full px-4 py-1.5 text-[13.5px] font-bold transition duration-150 ${
                   activeTab === "applied"
-                    ? "bg-[#f3e8ff] text-[#7c3aed]"
+                    ? "bg-[#e8f0ff] text-[#0052cc]"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
@@ -66,7 +66,7 @@ export default function SignalShell({
                 onClick={() => onTabChange("interview")}
                 className={`rounded-full px-4 py-1.5 text-[13.5px] font-bold transition duration-150 ${
                   activeTab === "interview"
-                    ? "bg-[#f3e8ff] text-[#7c3aed]"
+                    ? "bg-[#e8f0ff] text-[#0052cc]"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >

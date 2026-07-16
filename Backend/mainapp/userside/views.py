@@ -20,17 +20,35 @@ load_dotenv()
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 class userAuthAPIView(APIView):
-    def post(self,request):
-        serialzer = userSerializer(data = request.data)
-        if serialzer.is_valid():
-           serialzer.save()
-           return Response(
-            {
-                "message":"User Created Successfully",
-                 "data":serialzer.data
-            },status= 201
+
+    def post(self, request):
+
+        email = request.data.get("email")
+
+        if userModel.objects.filter(email=email).exists():
+            return Response(
+                {
+                    "message": "User already exists."
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
-        return Response(serialzer.errors, status= 400)
+
+        serializer = userSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {
+                    "message": "User created successfully.",
+                    "data": serializer.data
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 #login

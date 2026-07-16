@@ -289,7 +289,7 @@ function JobCard({
             <button
               type="button"
               disabled
-              className="inline-flex items-center rounded-xl bg-[#ede9fe] px-5 py-2 text-sm font-semibold text-[#8b5cf6]"
+              className="inline-flex items-center rounded-xl bg-[#e8f0ff] px-5 py-2 text-sm font-semibold text-[#0052cc]"
             >
               Applied
             </button>
@@ -297,7 +297,7 @@ function JobCard({
             <button
               type="button"
               onClick={() => onApply?.(job)}
-              className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#8b5cf6] to-[#ec4899] px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(139,92,246,0.18)]"
+              className="inline-flex items-center rounded-xl bg-gradient-to-r from-[#0052cc] to-[#1e5fff] px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,82,204,0.18)]"
             >
               Apply Now
             </button>
@@ -595,7 +595,7 @@ function DashboardPageContent() {
                   <h4 className="text-[15px] font-semibold tracking-[-0.01em] text-[#1f2430]">{group.skill}</h4>
                   <p className="mt-1 text-[12px] text-[#7b8498]">{group.items.length} question{group.items.length === 1 ? "" : "s"}</p>
                 </div>
-                <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#4f56e8]">
+                <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0052cc]">
                   {collapsedSkills[group.skill] ? "Show" : "Hide"}
                 </span>
               </button>
@@ -869,7 +869,7 @@ function DashboardPageContent() {
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] mt-4">
               <form onSubmit={handleUpload} className="space-y-4">
                 <label className="flex min-h-[170px] cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/20 px-5 py-6 text-center text-sm text-slate-500 hover:bg-slate-50 transition duration-150">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-purple-600 shadow-sm">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#0052cc] shadow-sm">
                     <Upload className="h-5.5 w-5.5" />
                   </span>
                   <span className="text-[14.5px] font-bold text-slate-700">Drop your PDF or DOCX resume here</span>
@@ -911,13 +911,13 @@ function DashboardPageContent() {
           <div className="grid gap-6 xl:grid-cols-[0.96fr_1.04fr]">
             <section className="rounded-[28px] border border-[#e6ebf5] bg-white p-6 shadow-[0_20px_45px_rgba(79,86,232,0.06)] md:p-7">
               <div className="flex flex-col items-center text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#8b5cf6_0%,#ec4899_100%)] text-[28px] font-bold text-white shadow-[0_12px_30px_rgba(139,92,246,0.25)]">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0052cc_0%,#00a8e8_100%)] text-[28px] font-bold text-white shadow-[0_12px_30px_rgba(0,82,204,0.25)]">
                   {initials}
                 </div>
 
                 <div className="mt-5">
                   <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-[#1f2430]">{displayName || "Your Name"}</h2>
-                  <p className="mt-1 text-[13px] font-medium text-[#8b5cf6]">{displayRole || "Designation"}</p>
+                  <p className="mt-1 text-[13px] font-medium text-[#0052cc]">{displayRole || "Designation"}</p>
                   <p className="mt-1 text-[13px] text-[#596377]">{displayCompany || "Company name"}</p>
                 </div>
               </div>
@@ -1036,7 +1036,7 @@ function DashboardPageContent() {
                           <ul className="mt-3 space-y-2">
                             {item.bullets.map((bullet, bulletIndex) => (
                               <li key={`${bullet}-${bulletIndex}`} className="flex items-start gap-2 text-[13px] leading-6 text-[#5b657d]">
-                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8b5cf6]" />
+                                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#0052cc]" />
                                 <span>{bullet}</span>
                               </li>
                             ))}
@@ -1079,7 +1079,7 @@ function DashboardPageContent() {
               <div className="mt-4">
                 <form onSubmit={handleUpload} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <label className="flex min-h-[66px] flex-1 cursor-pointer items-center gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/30 px-4 py-3.5 text-sm text-slate-500 hover:bg-slate-50 transition duration-150">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-purple-600 shadow-sm">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#0052cc] shadow-sm">
                       <Upload className="h-5 w-5" />
                     </span>
                     <span className="flex flex-col text-left">
@@ -1137,8 +1137,8 @@ function DashboardPageContent() {
                       />
                       <defs>
                         <linearGradient id="atsGaugeGradient" x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor="#c084fc" />
-                          <stop offset="100%" stopColor="#db2777" />
+                          <stop offset="0%" stopColor="#0052cc" />
+                          <stop offset="100%" stopColor="#00a8e8" />
                         </linearGradient>
                       </defs>
                     </svg>
@@ -1176,7 +1176,7 @@ function DashboardPageContent() {
                       value={filters.location}
                       onChange={(event) => updateFilter("location", event.target.value)}
                       placeholder="Filter by location"
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-purple-300 focus:ring-4 focus:ring-purple-100/50"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#0052cc] focus:ring-4 focus:ring-blue-100/50"
                     />
                   </label>
                   
@@ -1185,7 +1185,7 @@ function DashboardPageContent() {
                     <select
                       value={filters.employmentType}
                       onChange={(event) => updateFilter("employmentType", event.target.value)}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-purple-300 focus:ring-4 focus:ring-purple-100/50"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#0052cc] focus:ring-4 focus:ring-blue-100/50"
                     >
                       <option value="all">All types</option>
                       <option value="Full-Time">Full-Time</option>
@@ -1201,7 +1201,7 @@ function DashboardPageContent() {
                     <select
                       value={filters.experience}
                       onChange={(event) => updateFilter("experience", event.target.value)}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-purple-300 focus:ring-4 focus:ring-purple-100/50"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#0052cc] focus:ring-4 focus:ring-blue-100/50"
                     >
                       <option value="any">Any experience</option>
                       <option value="0-2">0 - 2 years</option>
@@ -1215,7 +1215,7 @@ function DashboardPageContent() {
                     <select
                       value={filters.posted}
                       onChange={(event) => updateFilter("posted", event.target.value)}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-purple-300 focus:ring-4 focus:ring-purple-100/50"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#0052cc] focus:ring-4 focus:ring-blue-100/50"
                     >
                       <option value="any">Any time</option>
                       <option value="7">Last 7 days</option>
@@ -1272,7 +1272,7 @@ function DashboardPageContent() {
                     type="button"
                     onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="rounded-lg bg-[#8b5cf6] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#7c3aed] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-lg bg-[#0052cc] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#003fa3] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Next
                   </button>

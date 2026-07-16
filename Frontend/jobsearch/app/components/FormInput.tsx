@@ -45,13 +45,13 @@ export default function FormInput({
           placeholder={placeholder}
           autoComplete={autoComplete}
           required={required}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50/40 px-4 py-3 pr-11 text-[14px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#8b5cf6] focus:bg-white focus:ring-4 focus:ring-purple-100/50"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50/40 px-4 py-3 pr-11 text-[14px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#0052cc] focus:bg-white focus:ring-4 focus:ring-blue-100/50"
         />
         {isPasswordField ? (
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute inset-y-0 right-3.5 inline-flex items-center text-slate-400 transition hover:text-[#8b5cf6]"
+            className="absolute inset-y-0 right-3.5 inline-flex items-center text-slate-400 transition hover:text-[#0052cc]"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (

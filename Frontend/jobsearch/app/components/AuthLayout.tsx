@@ -9,19 +9,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   // Overlapping avatar details
   const avatars = [
-    { label: "A", bg: "bg-[#c084fc]" },
-    { label: "B", bg: "bg-[#a78bfa]" },
-    { label: "C", bg: "bg-[#f472b6]" },
-    { label: "D", bg: "bg-[#fb7185]" },
+    { label: "A", bg: "bg-[#0052cc]" },
+    { label: "B", bg: "bg-[#1e5fff]" },
+    { label: "C", bg: "bg-[#00a8e8]" },
+    { label: "D", bg: "bg-[#0073e6]" },
   ];
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-tr from-[#f3f7ff] via-[#fafbff] to-[#fef2f6]">
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-tr from-[#e8f0ff] via-[#f0f4ff] to-[#e8f8ff]">
       {/* Background blobs for premium depth */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-purple-200/40 blur-3xl" />
-        <div className="absolute right-[-10rem] top-[-5rem] h-[500px] w-[500px] rounded-full bg-pink-100/30 blur-3xl" />
-        <div className="absolute bottom-[-10rem] left-[20%] h-[400px] w-[400px] rounded-full bg-blue-100/30 blur-3xl" />
+        <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
+        <div className="absolute right-[-10rem] top-[-5rem] h-[500px] w-[500px] rounded-full bg-cyan-100/25 blur-3xl" />
+        <div className="absolute bottom-[-10rem] left-[20%] h-[400px] w-[400px] rounded-full bg-blue-100/25 blur-3xl" />
       </div>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-12">
@@ -49,7 +49,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <div className="space-y-6">
               {/* Feature 1 */}
               <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0052cc]">
                   <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                   </svg>
@@ -62,7 +62,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
               {/* Feature 2 */}
               <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0052cc]">
                   <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="20" x2="18" y2="10" />
                     <line x1="12" y1="20" x2="12" y2="4" />
@@ -77,7 +77,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
               {/* Feature 3 */}
               <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0052cc]">
                   <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.32 11.32l.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
                   </svg>
@@ -117,7 +117,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <Logo />
             </div>
             
-            <div className="w-full max-w-[490px] rounded-[24px] border border-slate-100/80 bg-white p-7 shadow-xl shadow-purple-950/[0.04] sm:p-10">
+            <div className="w-full max-w-[490px] rounded-[24px] border border-blue-100/60 bg-white p-7 shadow-xl shadow-blue-950/[0.04] sm:p-10">
               {children}
             </div>
           </div>

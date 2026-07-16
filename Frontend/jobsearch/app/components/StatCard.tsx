@@ -8,14 +8,14 @@ type StatCardProps = {
 
 export default function StatCard({ label, value, tone = "sky" }: StatCardProps) {
   // Map tone to colors and icons
-  let colorClass = "from-blue-600 to-cyan-600";
+  let colorClass = "from-[#0052cc] to-[#00a8e8]";
   let Icon = FileText;
 
   if (tone === "emerald") {
-    colorClass = "from-purple-600 to-pink-600";
+    colorClass = "from-[#1e5fff] to-[#0052cc]";
     Icon = Briefcase;
   } else if (tone === "violet") {
-    colorClass = "from-green-600 to-emerald-600";
+    colorClass = "from-[#00a8e8] to-[#1e5fff]";
     Icon = CheckCircle;
   }
 
