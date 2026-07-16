@@ -82,11 +82,11 @@ export default function LoginPage() {
             autoComplete="current-password"
             required
             togglePassword
-            rightAction={
-              <a href="#" className="text-[12px] font-bold text-[#0052cc] hover:text-[#003fa3]">
-                Forgot?
-              </a>
-            }
+            // rightAction={
+            //   <a href="#" className="text-[12px] font-bold text-[#0052cc] hover:text-[#003fa3]">
+            //     Forgot?
+            //   </a>
+            // }
           />
 
           <div className="flex items-center">
