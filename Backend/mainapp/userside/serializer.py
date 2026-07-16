@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import userModel , Resume, AppliedJob
+from .models import userModel, Resume, AppliedJob, SavedJob, ChatMessage
 from django.contrib.auth.hashers import make_password
+
 class userSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
 
@@ -25,16 +26,11 @@ class userSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop("confirm_password")
-
-        validated_data["password"] = make_password(
-            validated_data["password"]
-        )
-
+        validated_data["password"] = make_password(validated_data["password"])
         return userModel.objects.create(**validated_data)
 
-        
-class ResumeSerializer(serializers.ModelSerializer):
 
+class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
         fields = "__all__"
@@ -43,4 +39,16 @@ class ResumeSerializer(serializers.ModelSerializer):
 class AppliedJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppliedJob
+        fields = "__all__"
+
+
+class SavedJobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SavedJob
+        fields = "__all__"
+
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatMessage
         fields = "__all__"

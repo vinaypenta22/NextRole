@@ -1,11 +1,11 @@
 from rest_framework.views import APIView
 from .serializer import userSerializer
-from .serializer import AppliedJobSerializer
+from .serializer import AppliedJobSerializer, SavedJobSerializer, ChatMessageSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import userModel , Resume , Job, AppliedJob
+from .models import userModel, Resume, Job, AppliedJob, SavedJob, ChatMessage
 from docx import Document
 import fitz
 import os
@@ -1502,3 +1502,136 @@ class AppliedJobAPIView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class SavedJobAPIView(APIView):
+
+    def get(self, request):
+        user_id = request.query_params.get("user_id")
+        if not user_id:
+            return Response({"message": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = userModel.objects.get(id=user_id)
+        except userModel.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        saved_jobs = SavedJob.objects.filter(user=user).order_by("-saved_at")
+        serializer = SavedJobSerializer(saved_jobs, many=True)
+        return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        job_data = request.data.get("job") or {}
+
+        if not user_id:
+            return Response({"message": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = userModel.objects.get(id=user_id)
+        except userModel.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not isinstance(job_data, dict):
+            return Response({"message": "job data is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        apply_link = job_data.get("apply_link") or job_data.get("url") or ""
+        title = job_data.get("title") or ""
+        company = job_data.get("company") or ""
+
+        defaults = {
+            "title": title,
+            "company": company,
+            "location": job_data.get("location") or "",
+            "employment_type": job_data.get("employment_type") or "",
+            "work_mode": job_data.get("work_mode") or "",
+            "experience": job_data.get("experience") or "",
+            "posted_at": job_data.get("posted_at") or "",
+            "description": job_data.get("description") or "",
+            "apply_link": apply_link,
+            "match_score": float(job_data.get("match_score") or 0),
+            "raw_data": job_data,
+        }
+
+        lookup = {"user": user}
+        if apply_link:
+            lookup["apply_link"] = apply_link
+        elif title and company:
+            lookup["title"] = title
+            lookup["company"] = company
+
+        saved_job, created = SavedJob.objects.get_or_create(defaults=defaults, **lookup)
+        serializer = SavedJobSerializer(saved_job)
+        return Response(
+            {"message": "Job saved." if created else "Already saved.", "data": serializer.data},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    def delete(self, request):
+        user_id = request.query_params.get("user_id")
+        apply_link = request.query_params.get("apply_link") or ""
+        title = request.query_params.get("title") or ""
+        company = request.query_params.get("company") or ""
+
+        if not user_id:
+            return Response({"message": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = userModel.objects.get(id=user_id)
+        except userModel.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        qs = SavedJob.objects.filter(user=user)
+        if apply_link:
+            qs = qs.filter(apply_link=apply_link)
+        elif title and company:
+            qs = qs.filter(title=title, company=company)
+        else:
+            return Response({"message": "apply_link or title+company required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        deleted_count, _ = qs.delete()
+        if deleted_count:
+            return Response({"message": "Job removed from saved."}, status=status.HTTP_200_OK)
+        return Response({"message": "Saved job not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ChatAPIView(APIView):
+
+    def get(self, request):
+        user_id = request.query_params.get("user_id")
+        if not user_id:
+            return Response({"message": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = userModel.objects.get(id=user_id)
+        except userModel.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        messages = ChatMessage.objects.filter(user=user).order_by("created_at")
+        serializer = ChatMessageSerializer(messages, many=True)
+        return Response({"results": serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        messages = request.data.get("messages", [])
+
+        if not user_id:
+            return Response({"message": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = userModel.objects.get(id=user_id)
+        except userModel.DoesNotExist:
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not isinstance(messages, list) or not messages:
+            return Response({"message": "messages must be a non-empty list."}, status=status.HTTP_400_BAD_REQUEST)
+
+        created = []
+        for msg in messages:
+            if not isinstance(msg, dict):
+                continue
+            role = str(msg.get("role", "")).strip()
+            text = str(msg.get("text", "")).strip()
+            tab = str(msg.get("tab", "")).strip()
+            if role not in ("user", "bot") or not text:
+                continue
+            obj = ChatMessage.objects.create(user=user, role=role, text=text, tab=tab)
+            created.append(obj)
+
+        serializer = ChatMessageSerializer(created, many=True)
+        return Response({"results": serializer.data}, status=status.HTTP_201_CREATED)

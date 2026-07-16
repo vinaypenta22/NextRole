@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, Phone, MapPin, Clock, Edit, Upload, CheckCircle2, Briefcase, Globe, Zap, Lightbulb, FlaskConical, Brain, TrendingUp } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Upload, CheckCircle2, Briefcase, Globe, Zap, Lightbulb, FlaskConical, Brain, TrendingUp, Bookmark, BookmarkCheck, X, Send, Bot } from "lucide-react";
 import SignalShell from "../components/SignalShell";
 import SectionCard from "../components/SectionCard";
 import StatCard from "../components/StatCard";
@@ -37,7 +37,7 @@ type ResumeSnapshot = {
   resume_insights?: Record<string, unknown>;
 };
 
-type ActiveTab = "profile" | "applications" | "applied" | "interview";
+type ActiveTab = "profile" | "applications" | "applied" | "saved" | "interview";
 
 type JobSearchFilters = {
   location: string;
@@ -221,15 +221,18 @@ function normalizeJob(job: Record<string, unknown>) {
   };
 }
 
-// Reusable Job Card Component
 function JobCard({
   job,
   isApplied = false,
+  isSaved = false,
   onApply,
+  onSave,
 }: {
   job: Record<string, unknown>;
   isApplied?: boolean;
+  isSaved?: boolean;
   onApply?: (job: Record<string, unknown>) => void;
+  onSave?: (job: Record<string, unknown>) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const normalized = useMemo(() => normalizeJob(job), [job]);
@@ -240,7 +243,6 @@ function JobCard({
   return (
     <article className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-[#0052cc]/20">
       <div className="flex flex-col gap-3">
-        {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f0ff] text-[#0052cc] font-bold text-sm">
@@ -251,12 +253,23 @@ function JobCard({
               <p className="mt-0.5 text-[13px] text-slate-500">{normalized.company}</p>
             </div>
           </div>
-          <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-bold ${scoreColor}`}>
-            {matchScore.toFixed(0)}% match
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${scoreColor}`}>
+              {matchScore.toFixed(0)}% match
+            </span>
+            <button
+              type="button"
+              onClick={() => onSave?.(job)}
+              title={isSaved ? "Unsave job" : "Save job"}
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${
+                isSaved ? "border-[#0052cc] bg-[#e8f0ff] text-[#0052cc]" : "border-slate-200 bg-white text-slate-400 hover:border-[#0052cc] hover:text-[#0052cc]"
+              }`}
+            >
+              {isSaved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}
+            </button>
+          </div>
         </div>
 
-        {/* Meta chips */}
         <div className="flex flex-wrap gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-[12px] text-slate-600">
             <Briefcase size={13} className="text-slate-400" />{normalized.employment_type}
@@ -271,7 +284,6 @@ function JobCard({
           ) : null}
         </div>
 
-        {/* Description */}
         {normalized.description ? (
           <div className="border-t border-slate-100 pt-3">
             <p className="text-[12.5px] leading-relaxed text-slate-500">
@@ -285,7 +297,6 @@ function JobCard({
           </div>
         ) : null}
 
-        {/* Actions */}
         <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
           {isApplied ? (
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-600">
@@ -297,9 +308,6 @@ function JobCard({
               Apply Now
             </button>
           )}
-          <button type="button" className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
-            Save
-          </button>
         </div>
       </div>
     </article>
@@ -313,10 +321,12 @@ function DashboardPageContent() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
+  const user = getCurrentUser();
+
   const requestedTab = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<ActiveTab>(
-    requestedTab === "profile" || requestedTab === "applications" || requestedTab === "applied" || requestedTab === "interview"
+    requestedTab === "profile" || requestedTab === "applications" || requestedTab === "applied" || requestedTab === "saved" || requestedTab === "interview"
       ? requestedTab
       : "profile",
   );
@@ -328,7 +338,133 @@ function DashboardPageContent() {
   const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>([]);
   const [profileExists, setProfileExists] = useState(false);
   const [uploadStep, setUploadStep] = useState(0);
+  const [savedJobKeys, setSavedJobKeys] = useState<Set<string>>(new Set());
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatHistoryLoaded, setChatHistoryLoaded] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; tab?: ActiveTab }[]>([
+    { role: "bot", text: "Hi! I'm your JobSignal assistant 🤖 Ask me anything about using the platform." },
+  ]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const [savedJobs, setSavedJobs] = useState<Array<Record<string, unknown>>>([]);
+
+  function getJobKey(job: Record<string, unknown>) {
+    const n = normalizeJob(job);
+    return n.apply_link || `${n.title}::${n.company}`;
+  }
+
+  async function toggleSaveJob(job: Record<string, unknown>) {
+    if (!user?.id) return;
+    const key = getJobKey(job);
+    const isSaved = savedJobKeys.has(key);
+    if (isSaved) {
+      const n = normalizeJob(job);
+      const params = new URLSearchParams({ user_id: String(user.id) });
+      if (n.apply_link) params.set("apply_link", n.apply_link);
+      else { params.set("title", n.title); params.set("company", n.company); }
+      await fetch(`${API_BASE}/saved-jobs/?${params}`, { method: "DELETE", headers: { Authorization: `${getAccessToken()}` } });
+      setSavedJobKeys((prev) => { const next = new Set(prev); next.delete(key); return next; });
+      setSavedJobs((prev) => prev.filter((j) => getJobKey(j) !== key));
+    } else {
+      await fetch(`${API_BASE}/saved-jobs/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `${getAccessToken()}` },
+        body: JSON.stringify({ user_id: user.id, job: normalizeJob(job) }),
+      });
+      setSavedJobKeys((prev) => new Set([...prev, key]));
+      setSavedJobs((prev) => [{ ...normalizeJob(job) }, ...prev]);
+    }
+  }
+
+  const HELP_QA: { patterns: string[]; answer: string; tab?: ActiveTab }[] = [
+     {patterns: ["hi",
+      "hello",
+      "hey",
+      "hii",
+      "hai",
+      "hiii",
+      "good morning",
+      "good afternoon",
+      "good evening",
+      "greetings",
+      "yo",
+      "hola",
+      "how are you",
+      "what's up",
+      "sup"],answer:"Hello! 👋 Welcome to NextRole. I'm your AI career assistant. I can help you upload your resume, find matching jobs, improve your ATS score, prepare for interviews, manage saved and applied jobs, and answer any questions about the platform. How can I help you today?"},
+    { patterns: ["upload", "resume", "cv", "pdf", "docx"], answer: "To upload your resume, go to the Applications tab. You'll find a file picker at the top — choose a PDF or DOCX file and click Upload Resume. The system will parse your skills and find matching jobs automatically.", tab: "applications" },
+    { patterns: ["job", "find job", "search job", "match", "recommend"], answer: "Matched jobs are shown in the Applications tab after you upload your resume. You can filter by location, employment type, experience, and date posted.", tab: "applications" },
+    { patterns: ["apply", "applied", "application"], answer: "Click Apply Now on any job card in the Applications tab. The job will be saved to your Applied tab and the company's application page will open in a new tab.", tab: "applied" },
+    { patterns: ["save", "bookmark", "saved job"], answer: "Click the bookmark icon on any job card to save it. Saved jobs are stored in the database and visible in the Saved tab. Applying to a saved job removes it from saved automatically.", tab: "saved" },
+    { patterns: ["ats", "score", "ats score", "resume score"], answer: "Your ATS score is shown in the Applications tab under ATS Resume Insights. It reflects how well your resume matches ATS filters. A score above 80 is excellent.", tab: "applications" },
+    { patterns: ["interview", "question", "prep", "preparation"], answer: "Interview prep questions are in the Interview tab. They are grouped by skill and include Basic, Intermediate, Advanced, and Coding levels — all generated from your resume.", tab: "interview" },
+    { patterns: ["profile", "skills", "education", "project"], answer: "Your parsed profile is in the Profile tab. It shows your skills, education, projects, certifications, and contact info extracted from your resume.", tab: "profile" },
+    { patterns: ["logout", "sign out", "log out"], answer: "Click the Logout button in the top navigation bar to sign out of your account." },
+    { patterns: ["tab", "navigate", "navigation", "where"], answer: "Use the tabs at the top: Profile (your parsed info), Applications (jobs + ATS), Applied (jobs you applied to), Saved (bookmarked jobs), Interview (prep questions)." },
+    { patterns: ["improvement", "suggestion", "improve resume"], answer: "Resume improvement suggestions are shown in the Applications tab under ATS Resume Insights on the right side. They are AI-generated tips specific to your resume.", tab: "applications" },
+  ];
+
+  function getBotReply(input: string): { text: string; tab?: ActiveTab } {
+    const lower = input.toLowerCase();
+    for (const qa of HELP_QA) {
+      if (qa.patterns.some((p) => lower.includes(p))) {
+        return { text: qa.answer, tab: qa.tab };
+      }
+    }
+    return { text: "I'm not sure about that. Try asking about: uploading a resume, finding jobs, ATS score, interview prep, saving jobs, or navigating tabs." };
+  }
+
+  function sendChatMessage() {
+    const trimmed = chatInput.trim();
+    if (!trimmed) return;
+    const reply = getBotReply(trimmed);
+    const userMsg = { role: "user" as const, text: trimmed };
+    const botMsg = { role: "bot" as const, text: reply.text, tab: reply.tab };
+    setChatMessages((prev) => [...prev, userMsg, botMsg]);
+    setChatInput("");
+    if (user?.id) {
+      void fetch(`${API_BASE}/chat/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `${getAccessToken()}` },
+        body: JSON.stringify({
+          user_id: user.id,
+          messages: [
+            { role: "user", text: trimmed },
+            { role: "bot", text: reply.text, tab: reply.tab ?? "" },
+          ],
+        }),
+      });
+    }
+  }
   
+  useEffect(() => {
+    if (!chatOpen || chatHistoryLoaded || !user?.id) return;
+    const currentUserId = user.id;
+    async function loadChatHistory() {
+      try {
+        const response = await fetch(`${API_BASE}/chat/?user_id=${currentUserId}`, {
+          headers: { Authorization: `${getAccessToken()}` },
+        });
+        const payload = await response.json();
+        if (response.ok && Array.isArray(payload.results) && payload.results.length > 0) {
+          const history = payload.results.map((m: { role: string; text: string; tab?: string }) => ({
+            role: m.role as "user" | "bot",
+            text: m.text,
+            tab: (m.tab || undefined) as ActiveTab | undefined,
+          }));
+          setChatMessages(history);
+        }
+      } catch { /* keep default greeting */ }
+      setChatHistoryLoaded(true);
+    }
+    void loadChatHistory();
+  }, [chatOpen, chatHistoryLoaded, user?.id]);
+
   const [filters, setFilters] = useState<JobSearchFilters>({
     location: "all",
     employmentType: "all",
@@ -339,7 +475,6 @@ function DashboardPageContent() {
   const [page, setPage] = useState(1);
   const [collapsedSkills, setCollapsedSkills] = useState<Record<string, boolean>>({});
   
-  const user = getCurrentUser();
   const hasResume = Boolean(
     resumeData?.is_resume_uploaded ||
       (resumeData?.resume_details && Object.keys(resumeData.resume_details).length > 0)
@@ -436,6 +571,26 @@ function DashboardPageContent() {
     }
     void loadAppliedJobs();
   }, [activeTab, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const currentUserId = user.id;
+    async function loadSavedJobs() {
+      try {
+        const response = await fetch(`${API_BASE}/saved-jobs/?user_id=${currentUserId}`, {
+          headers: { Authorization: `${getAccessToken()}` },
+        });
+        const payload = await response.json();
+        if (response.ok && Array.isArray(payload.results)) {
+          const jobs = payload.results as Array<Record<string, unknown>>;
+          setSavedJobs(jobs);
+          setSavedJobKeys(new Set(jobs.map((j) => getJobKey(j))));
+        }
+      } catch { /* keep existing */ }
+    }
+    void loadSavedJobs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   useEffect(() => {
     if (activeTab !== "applications") return;
@@ -807,6 +962,17 @@ function DashboardPageContent() {
         throw new Error(payload.message || "Unable to save applied job.");
       }
 
+      // Remove from saved jobs if it was saved
+      const key = getJobKey(job);
+      if (savedJobKeys.has(key)) {
+        const params = new URLSearchParams({ user_id: String(user.id) });
+        if (normalized.apply_link) params.set("apply_link", normalized.apply_link);
+        else { params.set("title", normalized.title); params.set("company", normalized.company); }
+        await fetch(`${API_BASE}/saved-jobs/?${params}`, { method: "DELETE", headers: { Authorization: `${getAccessToken()}` } });
+        setSavedJobKeys((prev) => { const next = new Set(prev); next.delete(key); return next; });
+        setSavedJobs((prev) => prev.filter((j) => getJobKey(j) !== key));
+      }
+
       await refreshAppliedJobs();
       if (normalized.apply_link) {
         window.open(normalized.apply_link, "_blank", "noopener,noreferrer");
@@ -907,7 +1073,7 @@ function DashboardPageContent() {
   }
 
   return (
-    <SignalShell activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout}>
+    <SignalShell activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} savedCount={savedJobs.length}>
       <div className="space-y-6">
         
         {activeTab !== "profile" ? (
@@ -1312,7 +1478,9 @@ function DashboardPageContent() {
                         key={`${normalized.title}-${index}`}
                         job={job}
                         isApplied={isApplied}
+                        isSaved={savedJobKeys.has(getJobKey(job))}
                         onApply={handleApply}
+                        onSave={toggleSaveJob}
                       />
                     );
                   })
@@ -1350,6 +1518,28 @@ function DashboardPageContent() {
                 </div>
               </div>
             </SectionCard>
+
+            {/* Saved Jobs */}
+            {savedJobs.length > 0 ? (
+              <SectionCard title="Saved jobs" description="Jobs you bookmarked — apply to remove them from saved.">
+                <div className="space-y-4 mt-4">
+                  {savedJobs.map((job, idx) => {
+                    const n = normalizeJob(job);
+                    const isApplied = appliedJobs.some((a) => a.title === n.title && a.company === n.company);
+                    return (
+                      <JobCard
+                        key={`saved-${n.apply_link || idx}`}
+                        job={job}
+                        isApplied={isApplied}
+                        isSaved={true}
+                        onApply={handleApply}
+                        onSave={toggleSaveJob}
+                      />
+                    );
+                  })}
+                </div>
+              </SectionCard>
+            ) : null}
           </div>
         ) : null}
 
@@ -1428,6 +1618,49 @@ function DashboardPageContent() {
           </div>
         ) : null}
 
+        {hasResume && activeTab === "saved" ? (
+          <div className="space-y-6">
+            <SectionCard
+              title="Saved jobs"
+              description={savedJobs.length ? `${savedJobs.length} job${savedJobs.length === 1 ? "" : "s"} bookmarked — apply to remove from saved.` : "Bookmark jobs from the Applications tab to see them here."}
+            >
+              <div className="space-y-4 mt-4">
+                {savedJobs.length ? (
+                  savedJobs.map((job, idx) => {
+                    const n = normalizeJob(job);
+                    const isApplied = appliedJobs.some((a) => a.title === n.title && a.company === n.company);
+                    return (
+                      <JobCard
+                        key={`saved-tab-${n.apply_link || idx}`}
+                        job={job}
+                        isApplied={isApplied}
+                        isSaved={true}
+                        onApply={handleApply}
+                        onSave={toggleSaveJob}
+                      />
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-14 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f0ff] text-[#0052cc] mb-4">
+                      <Bookmark size={24} />
+                    </div>
+                    <p className="text-[14px] font-semibold text-slate-600">No saved jobs yet</p>
+                    <p className="mt-1 text-[13px] text-slate-400">Click the bookmark icon on any job card to save it here.</p>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("applications")}
+                      className="mt-5 rounded-lg bg-[#0052cc] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#003fa3]"
+                    >
+                      Browse jobs
+                    </button>
+                  </div>
+                )}
+              </div>
+            </SectionCard>
+          </div>
+        ) : null}
+
         {hasResume && activeTab === "interview" ? (
           <div className="space-y-6">
             {interviewPrepView}
@@ -1435,6 +1668,105 @@ function DashboardPageContent() {
         ) : null}
 
       </div>
+
+      {/* ── Help Chatbot FAB ── */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        {chatOpen ? (
+          <div className="flex flex-col w-[360px] max-h-[520px] rounded-3xl border border-slate-200/80 bg-white shadow-[0_32px_80px_rgba(0,0,0,0.18)] overflow-hidden">
+            {/* Header */}
+            <div className="relative flex items-center gap-3 bg-gradient-to-r from-[#0052cc] to-[#0073e6] px-5 py-4">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white">
+                <Bot size={18} />
+              </div>
+              <div>
+                <p className="text-[13.5px] font-bold text-white leading-tight">JobSignal Assistant</p>
+                <p className="text-[11px] text-blue-200 font-medium">Always here to help</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setChatOpen(false)}
+                className="ml-auto flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0 max-h-[340px] bg-slate-50/60">
+              {!chatHistoryLoaded ? (
+                <div className="flex flex-col gap-2.5 pt-2">
+                  {["80%", "60%", "75%"].map((w, i) => (
+                    <div key={i} className={`flex items-end gap-2 ${i % 2 === 1 ? "justify-end" : "justify-start"}`}>
+                      {i % 2 === 0 && <div className="h-6 w-6 rounded-full bg-slate-200 animate-pulse shrink-0" />}
+                      <div className="h-9 rounded-2xl bg-slate-200 animate-pulse" style={{ width: w }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex items-end gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {msg.role === "bot" && (
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0052cc] text-white mb-0.5">
+                        <Bot size={12} />
+                      </div>
+                    )}
+                    <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-[12.5px] leading-relaxed shadow-sm ${
+                      msg.role === "user"
+                        ? "bg-[#0052cc] text-white rounded-br-sm"
+                        : "bg-white text-slate-700 rounded-bl-sm border border-slate-100"
+                    }`}>
+                      <p>{msg.text}</p>
+                      {msg.tab ? (
+                        <button
+                          type="button"
+                          onClick={() => { setActiveTab(msg.tab!); setChatOpen(false); }}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#0052cc]/10 border border-[#0052cc]/20 px-2.5 py-1 text-[11px] font-bold text-[#0052cc] hover:bg-[#0052cc]/20 transition"
+                        >
+                          Go to {msg.tab} →
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-slate-100 bg-white px-4 py-3 flex items-center gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") sendChatMessage(); }}
+                placeholder="Ask anything..."
+                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-[12.5px] outline-none focus:border-[#0052cc] focus:ring-2 focus:ring-blue-100 transition"
+              />
+              <button
+                type="button"
+                onClick={sendChatMessage}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0052cc] text-white transition hover:bg-[#003fa3] active:scale-95"
+              >
+                <Send size={15} />
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* FAB button */}
+        <button
+          type="button"
+          onClick={() => setChatOpen((p) => !p)}
+          className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#0052cc] to-[#0073e6] text-white shadow-[0_8px_28px_rgba(0,82,204,0.45)] transition hover:shadow-[0_12px_36px_rgba(0,82,204,0.55)] hover:scale-105 active:scale-95"
+          title="Help"
+        >
+          {chatOpen ? <X size={22} /> : <Bot size={24} />}
+          {!chatOpen && (
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-extrabold text-white shadow">?</span>
+          )}
+        </button>
+      </div>
+
     </SignalShell>
   );
 }

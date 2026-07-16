@@ -65,3 +65,37 @@ class AppliedJob(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.user_id}"
+
+
+class SavedJob(models.Model):
+    user = models.ForeignKey(userModel, on_delete=models.CASCADE, related_name="saved_jobs")
+    title = models.CharField(max_length=255)
+    company = models.CharField(max_length=255, blank=True, default="")
+    location = models.CharField(max_length=255, blank=True, default="")
+    employment_type = models.CharField(max_length=100, blank=True, default="")
+    work_mode = models.CharField(max_length=100, blank=True, default="")
+    experience = models.CharField(max_length=100, blank=True, default="")
+    posted_at = models.CharField(max_length=100, blank=True, default="")
+    description = models.TextField(blank=True, default="")
+    apply_link = models.URLField(blank=True, default="")
+    match_score = models.FloatField(default=0)
+    raw_data = models.JSONField(default=dict, blank=True)
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.user_id}"
+
+
+class ChatMessage(models.Model):
+    ROLE_CHOICES = [("user", "user"), ("bot", "bot")]
+    user = models.ForeignKey(userModel, on_delete=models.CASCADE, related_name="chat_messages")
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    text = models.TextField()
+    tab = models.CharField(max_length=30, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.role} [{self.user_id}]: {self.text[:40]}"
