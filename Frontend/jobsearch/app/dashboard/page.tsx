@@ -1665,7 +1665,7 @@ function DashboardPageContent() {
                 <Bot size={18} />
               </div>
               <div>
-                <p className="text-[13.5px] font-bold text-white leading-tight">JobSignal Assistant</p>
+                <p className="text-[13.5px] font-bold text-white leading-tight">NextRole Assistant</p>
                 <p className="text-[11px] text-blue-200 font-medium">Always here to help</p>
               </div>
               <button
