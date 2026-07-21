@@ -1,10 +1,13 @@
 from django.urls import path
 from .views import userAuthAPIView, UserLoginAPIView, ResumeUploadAPIView, AppliedJobAPIView, JobSearchAPIView, SavedJobAPIView, ChatAPIView
+from .resume_ai_views import ResumeATSAPIView, ResumeInterviewAPIView
 
 urlpatterns = [
     path('register/', userAuthAPIView.as_view()),
     path('login/', UserLoginAPIView.as_view()),
     path('upload/', ResumeUploadAPIView.as_view()),
+    path('resume/ats/', ResumeATSAPIView.as_view()),
+    path('resume/interview/', ResumeInterviewAPIView.as_view()),
     path('search-jobs/', JobSearchAPIView.as_view()),
     path('applied/', AppliedJobAPIView.as_view()),
     path('saved-jobs/', SavedJobAPIView.as_view()),

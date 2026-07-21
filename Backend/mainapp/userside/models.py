@@ -34,6 +34,18 @@ class Resume(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+class ResumeInsight(models.Model):
+    resume_hash = models.CharField(max_length=64, unique=True, db_index=True)
+    ats_score = models.PositiveSmallIntegerField(default=0)
+    suggestions = models.JSONField(default=list, blank=True)
+    career_roadmap = models.JSONField(default=list, blank=True)
+    learning_recommendations = models.JSONField(default=list, blank=True)
+    cover_letter = models.TextField(blank=True, default="")
+    interview_questions = models.JSONField(default=list, blank=True)
+    job_insights = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class Job(models.Model):
     title = models.CharField(max_length=255)
     company = models.CharField(max_length=255)

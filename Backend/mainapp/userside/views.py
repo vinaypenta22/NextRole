@@ -6,19 +6,32 @@ from rest_framework import status
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import userModel, Resume, Job, AppliedJob, SavedJob, ChatMessage
+from .resume_ai_service import ResumeAIService
 from docx import Document
 import fitz
 import os
 import json
 import re
 import time
-from groq import Groq
-from dotenv import load_dotenv
-import requests
-import serpapi
-load_dotenv()
+try:
+    from groq import Groq
+except Exception:
+    Groq = None
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    load_dotenv = None
+try:
+    import requests
+except Exception:
+    requests = None
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+try:
+    import serpapi
+except Exception:
+    serpapi = None
+client = Groq(api_key=os.getenv("GROQ_API_KEY")) if Groq else None
 class userAuthAPIView(APIView):
 
     def post(self, request):
@@ -220,51 +233,28 @@ class ResumeUploadAPIView(APIView):
 
             resume_data.save()
 
-            try:
-                recommended_jobs, search_query, provider_responses = self.search_jobs(extracted_data)
-                resume_insights = self.generate_resume_insights(extracted_data, recommended_jobs)
-                resume_data.last_search_filters = {}
-                resume_data.last_recommended_jobs = recommended_jobs
-                resume_data.search_query = search_query
-                resume_data.provider_responses = provider_responses
-                resume_data.resume_insights = resume_insights
-                resume_data.save(update_fields=[
-                    "is_resume_uploaded",
-                    "resume_details",
-                    "skills",
-                    "experience",
-                    "education",
-                    "projects",
-                    "certifications",
-                    "last_search_filters",
-                    "last_recommended_jobs",
-                    "search_query",
-                    "provider_responses",
-                    "resume_insights",
-                ])
-            except Exception as search_error:
-                print("Job search failed after resume upload:", str(search_error))
-                recommended_jobs, search_query, provider_responses = [], "", {}
-                resume_insights = self.generate_resume_insights(extracted_data, [])
-                resume_data.last_search_filters = {}
-                resume_data.last_recommended_jobs = []
-                resume_data.search_query = ""
-                resume_data.provider_responses = {}
-                resume_data.resume_insights = resume_insights
-                resume_data.save(update_fields=[
-                    "is_resume_uploaded",
-                    "resume_details",
-                    "skills",
-                    "experience",
-                    "education",
-                    "projects",
-                    "certifications",
-                    "last_search_filters",
-                    "last_recommended_jobs",
-                    "search_query",
-                    "provider_responses",
-                    "resume_insights",
-                ])
+            service = ResumeAIService()
+            resume_insights = service.generate_ats_score(extracted_data) or {}
+
+            resume_data.last_search_filters = {}
+            resume_data.last_recommended_jobs = []
+            resume_data.search_query = ""
+            resume_data.provider_responses = {}
+            resume_data.resume_insights = resume_insights
+            resume_data.save(update_fields=[
+                "is_resume_uploaded",
+                "resume_details",
+                "skills",
+                "experience",
+                "education",
+                "projects",
+                "certifications",
+                "last_search_filters",
+                "last_recommended_jobs",
+                "search_query",
+                "provider_responses",
+                "resume_insights",
+            ])
 
             return Response(
                 {
@@ -272,9 +262,9 @@ class ResumeUploadAPIView(APIView):
                     "resume_id": resume_data.id,
                     "is_resume_uploaded": True,
                     "resume_details": extracted_data,
-                    "recommended_jobs": recommended_jobs,
-                    "search_query": search_query,
-                    "provider_responses": provider_responses,
+                    "recommended_jobs": [],
+                    "search_query": "",
+                    "provider_responses": {},
                     "resume_insights": resume_insights,
                 },
                 status=status.HTTP_200_OK
@@ -354,71 +344,54 @@ class ResumeUploadAPIView(APIView):
             print("Resume text extraction returned empty text.")
             return self.normalize_resume_details({}, text)
 
+        if client is None:
+            return self.normalize_resume_details({}, text)
+
         # Guard against extremely long resumes blowing the context window,
         # which can cause truncation and inconsistent field extraction.
         max_chars = 15000
         truncated_text = text[:max_chars]
 
         prompt = f"""
-    You are an expert ATS Resume Parser with 10+ years of experience extracting structured data from resumes.
+Extract structured information from the resume below.
 
-    TASK: Extract information from the resume below and return it as a single valid JSON object.
+Rules:
+- Return ONLY valid JSON.
+- Do not add markdown or explanations.
+- Do not hallucinate values.
+- Use "" for missing strings.
+- Use [] for missing arrays.
+- Use 0 for missing numbers.
 
-    STRICT OUTPUT RULES:
-    - Return ONLY the JSON object. No markdown, no code fences, no explanations, no preamble.
-    - The response must start with {{ and end with }}.
-    - Every key in the schema below must be present in your output, even if empty.
-    - Never invent, guess, or hallucinate information not present in the resume text.
-    - If a field cannot be found, use "" for strings, [] for arrays, and 0 for numbers.
+JSON Schema:
+{{
+    "name": "",
+    "email": "",
+    "phone": "",
+    "skills": [],
+    "experience": "",
+    "experience_years": 0,
+    "education": [],
+    "projects": [],
+    "certifications": [],
+    "current_company": "",
+    "current_designation": "",
+    "location": "",
+    "linkedin": "",
+    "github": ""
+}}
 
-    FIELD EXTRACTION RULES:
-    - "name": Full name of the candidate as it appears at the top of the resume.
-    - "email": Primary email address. Must contain "@". If multiple, pick the first one listed.
-    - "phone": Primary phone number, preserve the format as written in the resume.
-    - "skills": Flat list of individual technical/professional skills. Split comma/pipe-separated skill lines into separate array items. Do not include soft-skill sentences.
-    - "experience": A concise 2-4 sentence summary of the candidate's overall work experience, written in third person.
-    - "experience_years": Total years of professional experience as a number. Calculate from work history date ranges if not explicitly stated. Do not double count overlapping ranges. If undeterminable, use 0.
-    - "education": List of objects: {{"degree": "", "institution": "", "year": ""}}.
-    - "projects": List of objects: {{"title": "", "description": ""}}. Only include if a distinct Projects section exists.
-    - "certifications": List of certification names as plain strings.
-    - "current_company": Employer from the most recent role only. Empty if candidate has no work history.
-    - "current_designation": Job title from the most recent role only.
-    - "location": City/state/country of the candidate from contact info. Not the employer's location.
-    - "linkedin": Full LinkedIn profile URL if present, else "".
-    - "github": Full GitHub profile URL if present, else "".
+Resume:
 
-    SCHEMA (return exactly these keys, nothing more, nothing less):
-    {{
-        "name": "",
-        "email": "",
-        "phone": "",
-        "skills": [],
-        "experience": "",
-        "experience_years": 0,
-        "education": [],
-        "projects": [],
-        "certifications": [],
-        "current_company": "",
-        "current_designation": "",
-        "location": "",
-        "linkedin": "",
-        "github": ""
-    }}
-
-    RESUME TEXT:
-    \"\"\"
-    {truncated_text}
-    \"\"\"
-
-    Return the JSON object now.
-    """
+{truncated_text}
+"""
 
         last_error = None
 
         for attempt in range(3):
             try:
                 response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-8b-instant",
                     messages=[
                         {
                             "role": "system",
@@ -432,7 +405,6 @@ class ResumeUploadAPIView(APIView):
                     temperature=0,
                     response_format={"type": "json_object"},
                 )
-
                 result = response.choices[0].message.content.strip()
 
                 if result.startswith("```"):
@@ -517,20 +489,46 @@ Return ONLY this JSON (no markdown, no explanation outside JSON):
 
 Now generate the full response for ALL skills: {json.dumps(core_skills)}. Every skill must have exactly 3 Basic + 3 Intermediate + 3 Advanced + 3 Coding items."""
 
+        skills_json = json.dumps(core_skills)
+        prompt = f"""Create an interview prep pack from this resume data.
+
+Designation: {designation}
+Skills: {skills_json}
+Experience: {experience_years} years
+
+Rules:
+- Return only valid JSON.
+- For each skill, generate exactly 3 Basic, 3 Intermediate, 3 Advanced, and 3 Coding items.
+- Each item must have: skill, level, question, answer.
+- Coding answers must include complete working code plus a brief explanation.
+- Non-coding answers must be clear, accurate, and interview-ready.
+- Use only the skills above; do not invent extra skills.
+- Return exactly 5 short, actionable resume improvement suggestions.
+- No markdown, no extra text.
+
+JSON shape:
+{{
+  "ats_resume_score": 82,
+  "resume_improvement_suggestions": ["..."],
+  "ai_interview_preparation": [{{"skill": "", "level": "", "question": "", "answer": ""}}]
+}}
+
+Generate items for all skills in {skills_json}."""
+
         try:
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a Senior Technical Interview Coach. Return only valid JSON. No markdown fences. No text outside the JSON object.",
+                        "content": "You are a Senior Technical Interview Coach. Return only valid JSON with no markdown or extra text.",
                     },
                     {
                         "role": "user",
                         "content": prompt,
                     },
                 ],
-                temperature=0.3,
+                temperature=0.2,
                 response_format={"type": "json_object"},
                 max_tokens=8000,
             )
@@ -936,17 +934,26 @@ Now generate the full response for ALL skills: {json.dumps(core_skills)}. Every 
     def build_job_query(self, extracted_data, filters=None):
         filters = filters or {}
 
-        designation = (
-            extracted_data.get("current_designation") or
-            extracted_data.get("designation") or
-            extracted_data.get("title") or
-            extracted_data.get("role")
-        )
+        custom_query = filters.get("query") or filters.get("title")
+        if isinstance(custom_query, str) and custom_query.strip():
+            query = custom_query.strip()
+        else:
+            designation = (
+                extracted_data.get("current_designation") or
+                extracted_data.get("designation") or
+                extracted_data.get("title") or
+                extracted_data.get("role")
+            )
+            if isinstance(designation, str) and designation.strip():
+                query = designation.strip()
+            else:
+                query = "Software Developer"
 
-        if isinstance(designation, str) and designation.strip():
-            return designation.strip()
+        location = filters.get("location")
+        if isinstance(location, str) and location.strip() and location.strip().lower() != "all":
+            query = f"{query} in {location.strip()}"
 
-        return "Software Developer"
+        return query
 
     def build_api_params(self, extracted_data, filters=None):
         filters = filters or {}
@@ -1123,58 +1130,42 @@ Now generate the full response for ALL skills: {json.dumps(core_skills)}. Every 
         provider_responses = {}
         all_recommended_jobs = []
 
-        openwebninja_url = "https://api.openwebninja.com/jsearch/search-v2"
-        openwebninja_headers = {
-            "x-api-key": os.getenv("OPENWEBNINJA_API_KEY")
+        rapidapi_host = os.getenv("RAPIDAPI_HOST")
+        rapidapi_key = os.getenv("RAPIDAPI_KEY") 
+        rapidapi_url = "https://jsearch.p.rapidapi.com/search-v2"
+        rapidapi_headers = {
+            "Content-Type": "application/json",
+            "x-rapidapi-host": rapidapi_host,
+            "x-rapidapi-key": rapidapi_key,
         }
 
-        openweb_response = self._safe_get_json(
-            openwebninja_url,
-            headers=openwebninja_headers,
-            params=params,
+        rapidapi_params = {
+           "time_frame": "7d", "query": query ,"num_pages" :"20", "country":"in", "date_posted":"month"
+        }
+
+        rapidapi_response = self._safe_get_json(
+            rapidapi_url,
+            headers=rapidapi_headers,
+            params=rapidapi_params,
         )
-        provider_responses["openwebninja"] = {
-            "status_code": openweb_response.get("status_code"),
-            "ok": openweb_response.get("ok"),
-            "raw_response": openweb_response.get("payload"),
+        provider_responses["rapidapi_jsearch"] = {
+            "status_code": rapidapi_response.get("status_code"),
+            "ok": rapidapi_response.get("ok"),
+            "raw_response": rapidapi_response.get("payload"),
         }
 
-        if openweb_response.get("ok"):
-            jobs = self._collect_jobs_from_payload(openweb_response.get("payload"))
-            cursor = None
-            if isinstance(openweb_response.get("payload"), dict):
-                cursor = openweb_response.get("payload", {}).get("cursor")
-
-            max_pages = 20
-            pages_fetched = 1
-            while cursor and pages_fetched < max_pages:
-                next_params = dict(params)
-                next_params["cursor"] = cursor
-                next_response = self._safe_get_json(
-                    openwebninja_url,
-                    headers=openwebninja_headers,
-                    params=next_params,
-                )
-                if not next_response.get("ok"):
-                    break
-                next_payload = next_response.get("payload")
-                jobs.extend(self._collect_jobs_from_payload(next_payload))
-                next_cursor = next_payload.get("cursor") if isinstance(next_payload, dict) else None
-                if not isinstance(next_cursor, str) or not next_cursor.strip():
-                    break
-                cursor = next_cursor.strip()
-                pages_fetched += 1
-
+        if rapidapi_response.get("ok"):
+            jobs = self._collect_jobs_from_payload(rapidapi_response.get("payload"))
             for job in jobs:
                 normalized_job = self._normalize_recommended_job(job, resume_skills)
                 if normalized_job:
                     all_recommended_jobs.append(normalized_job)
 
-        fantastic_token = os.getenv("FANTASTIC_JOBS_TOKEN") or os.getenv("FANTASTIC_API_TOKEN")
+        fantastic_token = os.getenv("FANTASTIC_JOBS_TOKEN")
         fantastic_response = self._safe_get_json(
             "https://data.fantastic.jobs/v1/active-ats",
             headers={"Authorization": f"Bearer {fantastic_token}"} if fantastic_token else {},
-            params={"time_frame": "24h", "query": query},
+            params={"time_frame": "7d", "title": query ,"limit" :"500"},
         )
         provider_responses["fantastic_jobs"] = {
             "status_code": fantastic_response.get("status_code"),
@@ -1186,22 +1177,6 @@ Now generate the full response for ALL skills: {json.dumps(core_skills)}. Every 
                 normalized_job = self._normalize_recommended_job(job, resume_skills)
                 if normalized_job:
                     all_recommended_jobs.append(normalized_job)
-
-        rapidapi_host = os.getenv("RAPIDAPI_HOST") or "instant-naukri-jobs.p.rapidapi.com"
-        rapidapi_key = os.getenv("RAPIDAPI_KEY")
-        rapidapi_response = self._safe_get_json(
-            "https://instant-naukri-jobs.p.rapidapi.com/api/health",
-            headers={
-                "Content-Type": "application/json",
-                "x-rapidapi-host": rapidapi_host,
-                "x-rapidapi-key": rapidapi_key,
-            } if rapidapi_key else {},
-        )
-        provider_responses["naukri_health"] = {
-            "status_code": rapidapi_response.get("status_code"),
-            "ok": rapidapi_response.get("ok"),
-            "raw_response": rapidapi_response.get("payload"),
-        }
 
         serpapi_key = os.getenv("SERPAPI_API_KEY")
         serpapi_params = {
@@ -1347,6 +1322,7 @@ class JobSearchAPIView(APIView):
         user_id = request.data.get("user_id")
         extracted_data = request.data.get("resume_details") or {}
         filters = request.data.get("filters") or {}
+        persisted_resume = None
 
         if user_id:
             try:
@@ -1370,13 +1346,13 @@ class JobSearchAPIView(APIView):
             )
 
         helper = ResumeUploadAPIView()
+        service = ResumeAIService()
 
         try:
             recommended_jobs, query, provider_responses = helper.search_jobs(extracted_data, filters)
-            resume_insights = helper.generate_resume_insights(extracted_data, recommended_jobs)
+            resume_insights = service.generate_ats_score(extracted_data) or {}
 
             if user_id:
-                persisted_resume = Resume.objects.filter(user=user).order_by("-updated_at", "-created_at").first()
                 if persisted_resume:
                     persisted_resume.resume_details = extracted_data
                     persisted_resume.last_search_filters = filters

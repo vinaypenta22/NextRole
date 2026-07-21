@@ -8,6 +8,8 @@ import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
 import { saveAuth } from "../lib/auth";
 
+import Logo from "../components/Logo";
+
 const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}`;
 
 export default function SignupPage() {
@@ -65,9 +67,10 @@ export default function SignupPage() {
   return (
     <AuthLayout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-[25px] font-black tracking-tight text-slate-800">Create Account</h2>
-          <p className="mt-1 text-[13px] font-medium text-slate-500">Start your career transformation today</p>
+        <div className="flex flex-col items-center text-center">
+          <h2 className="text-[25px] font-black tracking-tight" style={{ color: "var(--fg)" }}>Create account</h2>
+          <p className="mt-1 text-[13px] font-medium" style={{ color: "var(--fg-muted)" }}>Start your career transformation today.</p>
+          <Logo />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -114,19 +117,19 @@ export default function SignupPage() {
           />
 
           <div className="flex items-start">
-            <label className="flex items-start gap-2 cursor-pointer select-none text-[13px] font-semibold text-slate-500 leading-normal">
+            <label className="flex items-start gap-2 cursor-pointer select-none text-[13px] font-semibold leading-normal" style={{ color: "var(--fg-muted)" }}>
               <input
                 type="checkbox"
                 required
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0052cc] focus:ring-[#0052cc]"
+                className="mt-0.5 h-4 w-4 rounded border-[var(--surface-border)] bg-[var(--surface)] text-[var(--accent)] focus:ring-[var(--accent)]"
               />
               <span>
                 I agree to the{" "}
-                <a href="#" className="text-[#0052cc] hover:text-[#003fa3]">
+                <a href="#" className="font-bold hover:underline" style={{ color: "var(--fg)" }}>
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="#" className="text-[#0052cc] hover:text-[#003fa3]">
+                <a href="#" className="font-bold hover:underline" style={{ color: "var(--fg)" }}>
                   Privacy Policy
                 </a>
               </span>
@@ -144,9 +147,9 @@ export default function SignupPage() {
           </PrimaryButton>
         </form>
 
-        <div className="text-center text-[13px] font-semibold text-slate-500">
+        <div className="text-center text-[13px] font-semibold" style={{ color: "var(--fg-muted)" }}>
           Already have an account?{" "}
-          <Link href="/login" className="text-[#0052cc] hover:text-[#003fa3]">
+          <Link href="/login" className="font-bold hover:underline" style={{ color: "var(--accent)" }}>
             Sign in
           </Link>
         </div>

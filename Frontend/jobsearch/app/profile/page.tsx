@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Phone, MapPin, Clock, Edit, Upload, CheckCircle2 } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Upload, CheckCircle2 } from "lucide-react";
 import SignalShell from "../components/SignalShell";
 import SectionCard from "../components/SectionCard";
 import FormInput from "../components/FormInput";
@@ -28,6 +28,8 @@ const defaultProfile = {
   bio: "",
   password: "",
 };
+
+type ProfileData = typeof defaultProfile;
 
 type ResumeSnapshot = {
   resume_id?: number;
@@ -84,8 +86,15 @@ function normalizeParsedItems(value: unknown): ParsedResumeItem[] {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(defaultProfile);
+  const [mounted, setMounted] = useState(false);
+  const [profile, setProfile] = useState<ProfileData>(() => {
+    const saved = getProfile();
+    const currentUser = getCurrentUser();
+    if (saved) {
+      return { ...defaultProfile, ...saved, email: saved.email || currentUser?.email || "" };
+    }
+    return { ...defaultProfile, email: currentUser?.email || "" };
+  });
   const [message, setMessage] = useState<string | null>(null);
   
   // Resume upload states
@@ -93,42 +102,31 @@ export default function ProfilePage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [resumeData, setResumeData] = useState<ResumeSnapshot | null>(null);
+  const [resumeData, setResumeData] = useState<ResumeSnapshot | null>(() => {
+    return (getResumeData() as ResumeSnapshot | null) || null;
+  });
   
   // Dashboard count states
-  const [matchedJobsCount, setMatchedJobsCount] = useState(0);
+  const [matchedJobsCount, setMatchedJobsCount] = useState<number>(() => {
+    const cachedResume = getResumeData() as ResumeSnapshot | null;
+    return Array.isArray(cachedResume?.recommended_jobs) ? cachedResume.recommended_jobs.length : 0;
+  });
   const [appliedJobsCount, setAppliedJobsCount] = useState(0);
   
-  // Edit mode toggle
-  const [isEditing, setIsEditing] = useState(false);
-
   const user = getCurrentUser();
   const hasResume = Boolean(resumeData);
+  const token = getAccessToken();
 
   useEffect(() => {
-    const token = getAccessToken();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!token) {
       router.replace("/login");
-      return;
     }
-
-    const saved = getProfile();
-    if (saved) {
-      setProfile({ ...defaultProfile, ...saved, email: saved.email || user?.email || "" });
-    } else if (user?.email) {
-      setProfile((prev) => ({ ...prev, email: user.email }));
-    }
-
-    const cachedResume = getResumeData() as ResumeSnapshot | null;
-    if (cachedResume) {
-      setResumeData(cachedResume);
-      if (Array.isArray(cachedResume.recommended_jobs)) {
-        setMatchedJobsCount(cachedResume.recommended_jobs.length);
-      }
-    }
-
-    setLoading(false);
-  }, [router, user?.email]);
+  }, [router, token]);
 
   // Fetch counts from APIs
   useEffect(() => {
@@ -175,14 +173,6 @@ export default function ProfilePage() {
       void fetchMatched();
     }
   }, [user?.id, matchedJobsCount]);
-
-  function handleSave(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    saveProfile(profile);
-    setMessage("Profile updated successfully.");
-    setIsEditing(false);
-    setTimeout(() => setMessage(null), 3000);
-  }
 
   function handleLogout() {
     clearAuth();
@@ -275,7 +265,7 @@ export default function ProfilePage() {
       .toUpperCase() || "VP";
   }, [displayName]);
 
-  if (loading) {
+  if (!mounted || !token) {
     return (
       <div className="flex min-h-screen items-center justify-center text-[14px] font-semibold text-slate-400">
         Loading profile...
@@ -333,144 +323,53 @@ export default function ProfilePage() {
         {/* Bottom Columns: User Info, Skills, Education */}
         <div className="grid gap-6 xl:grid-cols-2">
           
-          {/* Left Panel: Profile Detail Card / Form */}
-          <div className="rounded-[20px] border border-slate-100 bg-white p-6 shadow-sm shadow-purple-950/[0.015] h-fit">
-            {isEditing ? (
-              /* Editable profile form */
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[16px] font-black text-slate-800">Edit Personal Info</h3>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="text-xs font-bold text-slate-400 hover:text-slate-600"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                
-                <form onSubmit={handleSave} className="space-y-4">
-                  <FormInput
-                    label="Full Name"
-                    name="name"
-                    value={profile.name}
-                    onChange={(value) => setProfile((prev) => ({ ...prev, name: value }))}
-                    placeholder="Your full name"
-                    required
-                  />
-                  <FormInput
-                    label="Email Address"
-                    name="email"
-                    value={profile.email}
-                    onChange={(value) => setProfile((prev) => ({ ...prev, email: value }))}
-                    type="email"
-                    placeholder="you@example.com"
-                    required
-                  />
-                  <FormInput
-                    label="Phone Number"
-                    name="phone"
-                    value={profile.phone}
-                    onChange={(value) => setProfile((prev) => ({ ...prev, phone: value }))}
-                    placeholder="Phone number"
-                  />
-                  <FormInput
-                    label="Location"
-                    name="location"
-                    value={profile.location}
-                    onChange={(value) => setProfile((prev) => ({ ...prev, location: value }))}
-                    placeholder="City, country"
-                  />
-                  <div className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-                    <span className="text-[13px] font-semibold text-slate-700">Bio</span>
-                    <textarea
-                      value={profile.bio}
-                      onChange={(event) => setProfile((prev) => ({ ...prev, bio: event.target.value }))}
-                      rows={3}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/40 px-4 py-3 text-[14px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#8b5cf6] focus:bg-white focus:ring-4 focus:ring-purple-100/50"
-                      placeholder="Write a brief professional summary"
-                    />
-                  </div>
-                  <FormInput
-                    label="Change Password"
-                    name="password"
-                    value={profile.password ?? ""}
-                    onChange={(value) => setProfile((prev) => ({ ...prev, password: value }))}
-                    type="password"
-                    placeholder="New password"
-                  />
-                  
-                  <PrimaryButton type="submit" className="w-full py-3">
-                    Save Changes
-                  </PrimaryButton>
-                </form>
+          {/* Left Panel: Profile Detail Card */}
+          <div className="glass-panel h-fit rounded-[24px] p-6">
+            <div className="flex flex-col items-center space-y-6 text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#4f46e5,#7c3aed)] text-[22px] font-black text-white shadow-[0_14px_26px_rgba(79,70,229,0.28)]">
+                {initials}
               </div>
-            ) : (
-              /* Read-only profile details view (Matches profile.png left panel) */
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="w-full flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center gap-1 text-[12px] font-bold text-[#8b5cf6] hover:text-[#7c3aed] hover:underline"
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                    <span>Edit Profile</span>
-                  </button>
+
+              <div className="space-y-1">
+                <h3 className="text-[21px] font-black tracking-tight text-slate-900">{displayName}</h3>
+                <p className="text-[13.5px] font-bold text-indigo-600">{displayRole || "Profession"}</p>
+                {displayCompany ? (
+                  <p className="text-[12.5px] font-medium text-slate-500">{displayCompany}</p>
+                ) : null}
+              </div>
+
+              <hr className="w-full border-slate-200/80" />
+
+              <div className="w-full space-y-3.5 text-left text-[13.5px] text-slate-600">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-4 w-4 shrink-0 text-slate-400" />
+                  <span className="font-medium break-all">{displayEmail}</span>
                 </div>
 
-                <div className="flex flex-col items-center">
-                  {/* Purple avatar badge */}
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#a855f7] text-[20px] font-bold text-white shadow-md shadow-purple-500/10">
-                    {initials}
-                  </div>
-                  
-                  <h3 className="mt-4 text-[19px] font-extrabold text-slate-800 tracking-tight">{displayName}</h3>
-                  <p className="mt-0.5 text-[13.5px] font-bold text-[#8b5cf6]">{displayRole || "Profession"}</p>
-                  {displayCompany ? (
-                    <p className="text-[12.5px] font-medium text-slate-400 mt-0.5">{displayCompany}</p>
-                  ) : null}
+                <div className="flex items-center gap-3">
+                  <Phone className="h-4 w-4 shrink-0 text-slate-400" />
+                  <span className="font-medium">{displayPhone || "Not specified"}</span>
                 </div>
 
-                <hr className="w-full border-slate-100" />
-
-                {/* Contact list with icons */}
-                <div className="w-full space-y-3.5 text-left text-[13.5px] text-slate-500">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span className="font-medium break-all">{displayEmail}</span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span className="font-medium">{displayPhone || "Not specified"}</span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span className="font-medium">{displayLocation || "Not specified"}</span>
-                  </div>
-                </div>
-
-                <hr className="w-full border-slate-100" />
-
-                {/* Experience & Skills counts */}
-                <div className="w-full grid grid-cols-2 gap-4 text-left">
-                  <div className="space-y-1.5">
-                    <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Experience</p>
-                    <p className="text-[16px] font-black text-slate-800 leading-none">{displayExperience ? `${displayExperience} yr` : "0 yr"}</p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Skills Identified</p>
-                    <p className="text-[16px] font-black text-[#8b5cf6] leading-none">{skills.length}</p>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
+                  <span className="font-medium">{displayLocation || "Not specified"}</span>
                 </div>
               </div>
-            )}
 
-            {message ? (
-              <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700 text-center">{message}</p>
-            ) : null}
+              <hr className="w-full border-slate-200/80" />
+
+              <div className="grid w-full grid-cols-2 gap-4 text-left">
+                <div className="rounded-2xl bg-slate-50/80 p-3.5">
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Experience</p>
+                  <p className="mt-1 text-[16px] font-black leading-none text-slate-900">{displayExperience ? `${displayExperience} yr` : "0 yr"}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50/80 p-3.5">
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-400">Skills Identified</p>
+                  <p className="mt-1 text-[16px] font-black leading-none text-indigo-600">{skills.length}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Right Panel: Technical Skills & Education */}

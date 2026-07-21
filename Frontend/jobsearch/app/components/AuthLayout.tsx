@@ -1,126 +1,193 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useTheme } from "../lib/theme";
 import Logo from "./Logo";
-import Image  from "next/image";
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname?.includes("login");
+  const { mode, setMode } = useTheme();
 
-  // Overlapping avatar details
+  const features = [
+    {
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+      ),
+      title: "ATS Analysis",
+      text: "Instant score, recommendations, and skill fixes.",
+      color: "text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-950/45",
+    },
+    {
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
+        </svg>
+      ),
+      title: "Interview Prep",
+      text: "Custom tech questions matching your exact stack.",
+      color: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/45",
+    },
+    {
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="M22 4 12 14.01l-3-3" />
+        </svg>
+      ),
+      title: "Smart Match",
+      text: "Direct matching cards with accurate score ratings.",
+      color: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/45",
+    },
+  ];
+
   const avatars = [
-    { label: "A", bg: "bg-[#0052cc]" },
-    { label: "B", bg: "bg-[#1e5fff]" },
-    { label: "C", bg: "bg-[#00a8e8]" },
-    { label: "D", bg: "bg-[#0073e6]" },
+    { label: "V", bg: "#0f172a" },
+    { label: "A", bg: "#7c3aed" },
+    { label: "R", bg: "#f59e0b" },
+    { label: "S", bg: "#16a34a" },
   ];
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-tr from-[#e8f0ff] via-[#f0f4ff] to-[#e8f8ff]">
-      {/* Background blobs for premium depth */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-blue-200/30 blur-3xl" />
-        <div className="absolute right-[-10rem] top-[-5rem] h-[500px] w-[500px] rounded-full bg-cyan-100/25 blur-3xl" />
-        <div className="absolute bottom-[-10rem] left-[20%] h-[400px] w-[400px] rounded-full bg-blue-100/25 blur-3xl" />
+    <div
+      className="relative min-h-screen w-full overflow-hidden text-[var(--fg)] transition-colors duration-300"
+      style={{
+        background: mode === "dark"
+          ? "linear-gradient(135deg, #09090b 0%, #111118 50%, #181324 100%)"
+          : "linear-gradient(135deg, #ebdcd4 0%, #dbe2ea 50%, #eae3ef 100%)",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+        backgroundSize: "cover"
+      }}
+    >
+      {/* Subtle ambient blobs */}
+      <div className={`absolute inset-0 pointer-events-none overflow-hidden transition-opacity duration-300 ${mode === "dark" ? "opacity-25" : "opacity-100"}`}>
+        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-amber-200/20 blur-3xl" />
+        <div className="absolute right-[-8rem] top-[-4rem] h-[440px] w-[440px] rounded-full bg-emerald-100/25 blur-3xl" />
+        {mode === "dark" && (
+          <div className="absolute right-[15%] bottom-[10%] h-[380px] w-[380px] rounded-full bg-indigo-500/10 blur-3xl" />
+        )}
+        <div className="absolute bottom-[-6rem] left-[25%] h-64 w-64 rounded-full bg-orange-100/20 blur-3xl" />
       </div>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-12">
-        <div className="mx-auto grid w-full max-w-[1240px] items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-          {/* Left panel: Brand info & social proof */}
-          <div className="hidden flex-col justify-center space-y-10 lg:flex">
-            <Image
-              src={"/navbarlogo.png"}
-              alt="NextRole Logo"
-              width={350}
-              height={100}
-              priority
-              className="object-contain"
-            />
 
-            <div className="space-y-4">
-              <p className="text-[26px] font-extrabold leading-[1.35] tracking-tight text-slate-800">
-                {isLogin
-                  ? "Welcome back! Your AI-powered career companion is ready to help you find your next opportunity."
-                  : "Your AI-powered career companion. Upload your resume, get instant insights, and discover opportunities that match your skills."}
+
+      {/* Main layout */}
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-6 lg:p-12">
+        <div className="mx-auto grid w-full max-w-[1200px] items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
+
+          {/* ── LEFT: Hero ── */}
+          <div className="hidden flex-col justify-center space-y-8 lg:flex">
+
+
+            
+
+            {/* Main headline */}
+            <div className="space-y-3">
+              <h1 className="text-[40px] font-extrabold leading-[1.05] tracking-[-0.03em]" style={{ color: "var(--fg)" }}>
+                A <span style={{ color: "var(--accent)" }}>warmer, sharper</span>{"\n"}
+                <br />job search experience.
+              </h1>
+              <p className="max-w-md text-[15px] leading-7" style={{ color: "var(--fg-muted)" }}>
+                Analyze your resume instantly against ATS standards, access tailormade interview preparation, and discover matched positions in a calm, beautifully organized workspace.
               </p>
             </div>
 
-            {/* Feature lists */}
-            <div className="space-y-6">
-              {/* Feature 1 */}
-              <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0052cc]">
-                  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                  </svg>
-                </span>
-                <div>
-                  <h3 className="text-[15px] font-bold text-slate-800">Instant Resume Analysis</h3>
-                  <p className="mt-0.5 text-[13px] text-slate-500">Get your ATS score in seconds</p>
+            {/* Feature cards */}
+            <div className="grid gap-3.5 sm:grid-cols-3">
+              {features.map((feat) => (
+                <div
+                  key={feat.title}
+                  className="rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition duration-300 hover:scale-[1.02] hover:shadow-md"
+                  style={{
+                    background: "var(--surface)",
+                    borderColor: "var(--surface-border)",
+                  }}
+                >
+                  <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${feat.color} mb-3`}>
+                    {feat.icon}
+                  </span>
+                  <h3 className="text-[13.5px] font-extrabold" style={{ color: "var(--fg)" }}>{feat.title}</h3>
+                  <p className="mt-1 text-[12px] leading-5" style={{ color: "var(--fg-muted)" }}>{feat.text}</p>
                 </div>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0052cc]">
-                  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10" />
-                    <line x1="12" y1="20" x2="12" y2="4" />
-                    <line x1="6" y1="20" x2="6" y2="14" />
-                  </svg>
-                </span>
-                <div>
-                  <h3 className="text-[15px] font-bold text-slate-800">Skill Extraction</h3>
-                  <p className="mt-0.5 text-[13px] text-slate-500">Automatic skill identification & ranking</p>
-                </div>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0052cc]">
-                  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.32 11.32l.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-                  </svg>
-                </span>
-                <div>
-                  <h3 className="text-[15px] font-bold text-slate-800">Smart Job Matching</h3>
-                  <p className="mt-0.5 text-[13px] text-slate-500">AI-powered job recommendations</p>
-                </div>
-              </div>
+              ))}
             </div>
 
-            <hr className="border-slate-200" />
-
-            {/* Social Proof */}
-            <div className="space-y-3">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.15em] text-slate-400">Trusted by job seekers worldwide</p>
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2.5">
-                  {avatars.map((avatar, idx) => (
-                    <span
-                      key={idx}
-                      className={`flex h-8 w-8 items-center justify-center rounded-full ${avatar.bg} text-[11px] font-bold text-white ring-2 ring-white`}
-                    >
-                      {avatar.label}
-                    </span>
+            {/* Rating row */}
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-2.5">
+                {avatars.map((av, i) => (
+                  <span
+                    key={i}
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-black text-white ring-2 ring-white"
+                    style={{ backgroundColor: av.bg }}
+                  >
+                    {av.label}
+                  </span>
+                ))}
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <svg key={s} viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-[#f59e0b]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                   ))}
+                  <span className="ml-1 text-[12px] font-extrabold" style={{ color: "var(--fg)" }}>4.8/5 Rating</span>
                 </div>
-                <span className="text-[13px] font-bold text-slate-700">Join 10,000+ professionals</span>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--fg-subtle)" }}>Trusted by modern professionals seeking impact.</p>
               </div>
             </div>
           </div>
 
-          {/* Right panel: Authentication Form Card */}
+          {/* ── RIGHT: Auth card ── */}
           <div className="flex flex-col items-center justify-center">
-            {/* Mobile logo header */}
-            <div className="mb-8 flex justify-center lg:hidden">
-              <Logo />
-            </div>
-            
-            <div className="w-full max-w-[490px] rounded-[24px] border border-blue-100/60 bg-white p-7 shadow-xl shadow-blue-950/[0.04] sm:p-10">
+
+
+            <div
+              className="w-full max-w-[440px] rounded-3xl border p-7 shadow-[0_20px_60px_rgba(0,0,0,0.06)] transition-all duration-200"
+              style={{
+                background: "var(--surface)",
+                borderColor: "var(--surface-border)",
+              }}
+            >
+              {/* Sign In / Sign Up toggle */}
+              {/* <div
+                className="mb-6 flex rounded-xl border p-1"
+                style={{
+                  background: "var(--bg)",
+                  borderColor: "var(--surface-border)",
+                }}
+              >
+                <Link
+                  href="/login"
+                  className="flex-1 rounded-lg py-2 text-center text-[13px] font-bold transition-all duration-150"
+                  style={{
+                    background: isLogin ? "var(--surface)" : "transparent",
+                    color: isLogin ? "var(--fg)" : "var(--fg-muted)",
+                    boxShadow: isLogin ? "0 4px 12px rgba(0,0,0,0.05)" : "none",
+                  }}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="flex-1 rounded-lg py-2 text-center text-[13px] font-bold transition-all duration-150"
+                  style={{
+                    background: !isLogin ? "var(--surface)" : "transparent",
+                    color: !isLogin ? "var(--fg)" : "var(--fg-muted)",
+                    boxShadow: !isLogin ? "0 4px 12px rgba(0,0,0,0.05)" : "none",
+                  }}
+                >
+                  Sign Up
+                </Link>
+              </div> */}
+
+              {/* Form content injected here */}
               {children}
             </div>
           </div>
+
         </div>
       </div>
     </div>

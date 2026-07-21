@@ -1,0 +1,15 @@
+<svg width="320" height="90" viewBox="0 0 320 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="316" height="86" rx="24" fill="#FFF8EF" stroke="#E9DCC9" stroke-width="2"/>
+  <g transform="translate(18 18)">
+    <rect x="0" y="0" width="54" height="54" rx="18" fill="#111111"/>
+    <path d="M18 38C27 38 32 33 32 25C32 17 27 12 18 12H12V38H18Z" fill="#FEA655"/>
+    <path d="M18 20C22 20 24 22 24 25C24 28 22 30 18 30H19V20H18Z" fill="#FFF8EF"/>
+    <circle cx="41" cy="16" r="6" fill="#FEA655"/>
+  </g>
+  <text x="92" y="36" fill="#111111" font-family="Almarai, Arial, sans-serif" font-size="18" font-weight="800" letter-spacing="0.16em">JOB FINDER</text>
+  <text x="92" y="60" fill="#6E6358" font-family="Almarai, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.04em">Find your next role with confidence</text>
+  <g transform="translate(244 22)">
+    <rect x="0" y="0" width="48" height="48" rx="16" fill="#FEA655"/>
+    <path d="M13 25L21 17L29 25L21 33L13 25Z" fill="#111111"/>
+  </g>
+</svg>

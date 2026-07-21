@@ -7,31 +7,29 @@ type StatCardProps = {
 };
 
 export default function StatCard({ label, value, tone = "sky" }: StatCardProps) {
-  // Map tone to colors and icons
-  let colorClass = "from-[#0052cc] to-[#00a8e8]";
+  let colorClass = "from-[#4f46e5] to-[#7c3aed]";
   let Icon = FileText;
 
   if (tone === "emerald") {
-    colorClass = "from-[#1e5fff] to-[#0052cc]";
+    colorClass = "from-[#0f766e] to-[#14b8a6]";
     Icon = Briefcase;
   } else if (tone === "violet") {
-    colorClass = "from-[#00a8e8] to-[#1e5fff]";
+    colorClass = "from-[#5b5cf4] to-[#8b5cf6]";
     Icon = CheckCircle;
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 hover:border-slate-300 transition-all duration-300 shadow-sm shadow-purple-950/[0.01]">
-      {/* Subtle hover background highlight */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-[0.025] transition-opacity duration-300`} />
-      
+    <div className="group relative overflow-hidden tal-card rounded-[28px] p-6 transition-all duration-300 hover:-translate-y-0.5">
+      <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 transition-opacity duration-300 group-hover:opacity-[0.045]`} />
+
       <div className="relative">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</h3>
-          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colorClass} flex items-center justify-center text-white shadow-sm`}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--fg-muted)]">{label}</h3>
+          <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${colorClass} text-white shadow-[0_12px_20px_rgba(79,70,229,0.25)]`}>
             <Icon size={20} />
           </div>
         </div>
-        <p className="text-3xl font-black text-slate-800 leading-none">{value}</p>
+        <p className="text-3xl font-black leading-none text-[var(--fg)]">{value}</p>
       </div>
     </div>
   );

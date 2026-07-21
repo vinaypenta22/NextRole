@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import userModel, Resume, AppliedJob, SavedJob, ChatMessage
+from .models import userModel, Resume, ResumeInsight, AppliedJob, SavedJob, ChatMessage
 from django.contrib.auth.hashers import make_password
 
 class userSerializer(serializers.ModelSerializer):
@@ -33,6 +33,12 @@ class userSerializer(serializers.ModelSerializer):
 class ResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
+        fields = "__all__"
+
+
+class ResumeInsightSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResumeInsight
         fields = "__all__"
 
 

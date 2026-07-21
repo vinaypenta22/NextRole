@@ -3,6 +3,8 @@ type SectionCardProps = {
   description?: string;
   children: React.ReactNode;
   action?: React.ReactNode;
+  icon?: React.ReactNode;
+  noPadding?: boolean;
 };
 
 export default function SectionCard({
@@ -10,17 +12,38 @@ export default function SectionCard({
   description,
   children,
   action,
+  icon,
+  noPadding = false,
 }: SectionCardProps) {
   return (
-    <section className="rounded-[24px] border border-[#e6ebf5] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)] md:p-7">
-      <div className="mb-5 flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-[18px] font-semibold tracking-[-0.02em] text-[#1f2430]">{title}</h3>
-          {description ? <p className="text-[13px] leading-relaxed text-[#667085]">{description}</p> : null}
-        </div>
-        {action}
+    <section className="tal-card rounded-[26px] shadow-xs hover:shadow-lg transition-all duration-300">
+
+
+      <div className={`${noPadding ? "" : "p-5 md:p-6"}`}>
+        {(title || action) && (
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              {icon && (
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--accent)]">
+                  {icon}
+                </span>
+              )}
+              <div className="space-y-0.5">
+                <h3 className="text-[16px] font-bold tracking-tight text-[var(--fg)]">
+                  {title}
+                </h3>
+                {description && (
+                  <p className="text-[12.5px] leading-relaxed text-[var(--fg-muted)]">
+                    {description}
+                  </p>
+                )}
+              </div>
+            </div>
+            {action && <div className="shrink-0">{action}</div>}
+          </div>
+        )}
+        {children}
       </div>
-      {children}
     </section>
   );
 }

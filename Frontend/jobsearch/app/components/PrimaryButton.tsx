@@ -4,6 +4,7 @@ type PrimaryButtonProps = {
   type?: "button" | "submit";
   isLoading?: boolean;
   className?: string;
+  variant?: "amber" | "outline" | "dark";
 };
 
 export default function PrimaryButton({
@@ -12,13 +13,26 @@ export default function PrimaryButton({
   type = "button",
   isLoading = false,
   className = "",
+  variant = "amber",
 }: PrimaryButtonProps) {
+  const base =
+    "cursor-pointer inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70";
+
+  const styles: Record<string, string> = {
+    amber:
+      "text-white bg-gradient-to-r from-[#0052cc] to-[#1e5fff] hover:opacity-95 shadow-[0_8px_24px_rgba(0,82,204,0.20)] hover:shadow-[0_12px_30px_rgba(0,82,204,0.30)]",
+    outline:
+      "border border-[var(--surface-border)] bg-[var(--surface)] text-[var(--fg)] hover:bg-[var(--surface-hover)]",
+    dark:
+      "bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a]",
+  };
+
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={isLoading}
-      className={`cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0052cc] to-[#1e5fff] px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/15 transition duration-150 hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
+      className={`${base} ${styles[variant]} ${className}`}
     >
       {isLoading ? (
         <>
