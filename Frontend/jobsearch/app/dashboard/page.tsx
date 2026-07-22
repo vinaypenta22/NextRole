@@ -511,19 +511,306 @@ function DashboardPageContent() {
     }
   }
 
-  const HELP_QA: { patterns: string[]; answer: string; tab?: ActiveTab }[] = [
-    { patterns: ["hi","hello","hey","hii","hai","hiii","good morning","good afternoon","good evening","greetings","yo","hola","how are you","what's up","sup"], answer: "Hello! 👋 Welcome to NextRole. I'm your AI career assistant. How can I help you today?" },
-    { patterns: ["upload","resume","cv","pdf","docx"], answer: "To upload your resume, go to the Find Jobs tab. You'll find a file picker — choose a PDF or DOCX and click Upload Resume.", tab: "applications" },
-    { patterns: ["job","find job","search job","match","recommend"], answer: "Matched jobs are shown in the Find Jobs tab after you upload your resume.", tab: "applications" },
-    { patterns: ["apply","applied","application"], answer: "Click Apply on any job card in the Find Jobs tab. The job will be saved to your Applied tab.", tab: "applied" },
-    { patterns: ["save","bookmark","saved job"], answer: "Click the bookmark icon on any job card to save it. Saved jobs are in the Saved tab.", tab: "saved" },
-    { patterns: ["ats","score","ats score","resume score"], answer: "Your ATS score is shown in the Find Jobs tab under ATS Resume Insights.", tab: "applications" },
-    { patterns: ["interview","question","prep","preparation"], answer: "Interview prep questions are in the Interview Prep tab — grouped by skill.", tab: "interview" },
-    { patterns: ["profile","skills","education","project"], answer: "Your parsed profile is in the Profile tab.", tab: "profile" },
-    { patterns: ["logout","sign out","log out"], answer: "Click the Logout icon in the top navigation bar to sign out." },
-    { patterns: ["tab","navigate","navigation","where"], answer: "Use the tabs at the top: Profile, Find Jobs, Applied, Saved, Interview Prep." },
-    { patterns: ["improvement","suggestion","improve resume"], answer: "Resume improvement suggestions are shown in the Find Jobs tab under Actionable Resume Edits.", tab: "applications" },
-  ];
+ const HELP_QA: { patterns: string[]; answer: string; tab?: ActiveTab }[] = [
+
+  // ===========================
+  // Greetings
+  // ===========================
+  {
+    patterns: [
+      "hi","hello","hey","hey there","good morning","good afternoon",
+      "good evening","hola","yo","hii","hai","what's up","how are you"
+    ],
+    answer:
+      "👋 Welcome to NextRole! I'm your AI Career Assistant. I can help you upload your resume, find jobs, improve your ATS score, explain recommendations, prepare for interviews, and navigate the platform."
+  },
+
+  // ===========================
+  // Resume Upload
+  // ===========================
+  {
+    patterns: [
+      "upload resume",
+      "upload cv",
+      "resume upload",
+      "where upload",
+      "how upload",
+      "upload pdf",
+      "upload docx",
+      "change resume",
+      "replace resume",
+      "update resume",
+      "new resume",
+      "resume not uploaded",
+      "resume"
+    ],
+    answer:
+      "Go to the Find Jobs page. Click 'Choose PDF/DOCX Resume', select your PDF or DOCX file, and click Get Matched. Your resume will be analyzed automatically.",
+    tab: "applications"
+  },
+
+  // ===========================
+  // Resume Parsing
+  // ===========================
+  {
+    patterns: [
+      "resume parsed",
+      "profile information",
+      "my information",
+      "my profile",
+      "parsed skills",
+      "education",
+      "projects",
+      "experience",
+      "certifications",
+      "profile"
+    ],
+    answer:
+      "Your uploaded resume is automatically parsed. You can see your skills, education, projects, experience and profile information in the Profile page.",
+    tab: "profile"
+  },
+
+  // ===========================
+  // ATS Score
+  // ===========================
+  {
+    patterns: [
+      "ats",
+      "ats score",
+      "resume score",
+      "cv score",
+      "match score",
+      "score",
+      "resume rating"
+    ],
+    answer:
+      "Your ATS Resume Score is displayed on the Find Jobs page after uploading your resume. A higher score increases your chances of matching with recruiters.",
+    tab: "applications"
+  },
+
+  // ===========================
+  // Resume Improvements
+  // ===========================
+  {
+    patterns: [
+      "improve resume",
+      "resume suggestions",
+      "resume tips",
+      "actionable edits",
+      "resume improvement",
+      "improve ats",
+      "increase ats",
+      "better resume",
+      "resume feedback"
+    ],
+    answer:
+      "NextRole analyzes your resume and suggests improvements such as missing keywords, measurable achievements, formatting fixes, and certifications to improve ATS compatibility.",
+    tab: "applications"
+  },
+
+  // ===========================
+  // Job Matching
+  // ===========================
+  {
+    patterns: [
+      "find jobs",
+      "recommended jobs",
+      "job recommendations",
+      "matched jobs",
+      "job match",
+      "jobs",
+      "search jobs",
+      "find job",
+      "recommend jobs",
+      "career opportunities"
+    ],
+    answer:
+      "After uploading your resume, NextRole recommends jobs that match your skills and experience. Visit the Find Jobs page to browse recommended positions.",
+    tab: "applications"
+  },
+
+  // ===========================
+  // Job Filters
+  // ===========================
+  {
+    patterns: [
+      "filter jobs",
+      "search filter",
+      "job filters",
+      "location filter",
+      "experience filter",
+      "job type",
+      "remote jobs",
+      "clear filters"
+    ],
+    answer:
+      "Use the filters above the job list to search by keywords, location, experience level, job type, and work schedule.",
+    tab: "applications"
+  },
+
+  // ===========================
+  // Apply Jobs
+  // ===========================
+  {
+    patterns: [
+      "apply",
+      "apply job",
+      "application",
+      "apply now",
+      "job application",
+      "submit application"
+    ],
+    answer:
+      "Click the Apply button on any recommended job. Once applied, the job will appear in your Applied page.",
+    tab: "applied"
+  },
+
+  // ===========================
+  // Applied Jobs
+  // ===========================
+  {
+    patterns: [
+      "applied jobs",
+      "applications",
+      "my applications",
+      "application status",
+      "where applied",
+      "tracking applications"
+    ],
+    answer:
+      "All jobs you've applied for are available in the Applied page where you can track your applications.",
+    tab: "applied"
+  },
+
+  // ===========================
+  // Saved Jobs
+  // ===========================
+  {
+    patterns: [
+      "save",
+      "saved jobs",
+      "saved roles",
+      "bookmark",
+      "bookmark job",
+      "favorite jobs",
+      "wishlist"
+    ],
+    answer:
+      "Click the bookmark icon on any job card to save it. Saved jobs are available in the Saved page.",
+    tab: "saved"
+  },
+
+  // ===========================
+  // Interview Prep
+  // ===========================
+  {
+    patterns: [
+      "interview",
+      "interview prep",
+      "prepare interview",
+      "questions",
+      "technical questions",
+      "practice",
+      "mock interview",
+      "interview questions"
+    ],
+    answer:
+      "Visit the Interview Prep page to practice technical interview questions generated from your skills.",
+    tab: "interview"
+  },
+
+  // ===========================
+  // Skills
+  // ===========================
+  {
+    patterns: [
+      "skills",
+      "technical skills",
+      "my skills",
+      "detected skills",
+      "skill list"
+    ],
+    answer:
+      "Your technical skills are automatically extracted from your resume and displayed on the Profile page.",
+    tab: "profile"
+  },
+
+  // ===========================
+  // Education
+  // ===========================
+  {
+    patterns: [
+      "education",
+      "college",
+      "degree",
+      "qualification",
+      "academic"
+    ],
+    answer:
+      "Your educational qualifications are extracted from your resume and displayed on the Profile page.",
+    tab: "profile"
+  },
+
+  // ===========================
+  // Projects
+  // ===========================
+  {
+    patterns: [
+      "projects",
+      "my projects",
+      "portfolio",
+      "experience projects"
+    ],
+    answer:
+      "Projects extracted from your resume are shown in the Profile page.",
+    tab: "profile"
+  },
+
+  // ===========================
+  // Navigation
+  // ===========================
+  {
+    patterns: [
+      "tabs",
+      "navigation",
+      "where",
+      "pages",
+      "dashboard",
+      "menu"
+    ],
+    answer:
+      "NextRole has five main sections: Profile, Find Jobs, Applied, Saved, and Interview Prep."
+  },
+
+  // ===========================
+  // Logout
+  // ===========================
+  {
+    patterns: [
+      "logout",
+      "log out",
+      "sign out",
+      "exit account"
+    ],
+    answer:
+      "Click the Logout icon in the top-right corner to sign out."
+  },
+
+  // ===========================
+  // Unsupported
+  // ===========================
+  {
+    patterns: [
+      "help",
+      "support",
+      "what can you do",
+      "features"
+    ],
+    answer:
+      "I can help you upload resumes, improve ATS scores, explain resume suggestions, recommend jobs, apply for jobs, save jobs, navigate the application, and prepare for interviews."
+  }
+
+];
 
   function getBotReply(input: string): { text: string; tab?: ActiveTab } {
     const lower = input.toLowerCase();
@@ -1785,7 +2072,7 @@ function DashboardPageContent() {
                   <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-[12.5px] leading-relaxed shadow-sm ${msg.role === "user" ? "text-white rounded-br-sm" : "rounded-bl-sm"}`} style={msg.role === "user" ? { background: "var(--accent)" } : { background: "var(--surface)", color: "var(--fg)", border: "1px solid var(--surface-border)" }}>
                     <p>{msg.text}</p>
                     {msg.tab && (
-                      <button type="button" onClick={() => { setActiveTab(msg.tab!); setChatOpen(false); }} className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold transition" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
+                      <button type="button" onClick={() => { setActiveTab(msg.tab!); setChatOpen(false); }} className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2.5 cursor-pointer py-1 text-[11px] font-bold transition" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
                         Go to {msg.tab} →
                       </button>
                     )}
